@@ -36,11 +36,20 @@ public class Order {
     }
 
     public void setTechnician(String newTechnician) {
+        if (!"PENDING".equals(this.status)) {
+            throw new IllegalStateException("Teknisi tidak dapat diubah");
+        }
+        this.technician = newTechnician;
     }
 
     public void setStatus(String newStatus) {
+        this.status = newStatus;
     }
 
     public void cancel() {
+        if (!"PENDING".equals(this.status)) {
+            throw new IllegalStateException("Order tidak dapat dibatalkan");
+        }
+        this.status = "CANCELLED";
     }
 }
