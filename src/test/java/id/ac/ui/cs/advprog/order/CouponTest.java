@@ -14,25 +14,25 @@ public class CouponTest {
     @Test
     void testCreateCoupon() {
         Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
-        coupon.setStartDate(LocalDateTime.of(2025, 4, 10, 0, 0));
-        coupon.setEndDate(LocalDateTime.of(2025, 5, 10, 0, 0));
-        coupon.setDeletedAt(null);
-        coupon.setCreatedAt(LocalDateTime.of(2025, 4, 1, 12, 0));
-        coupon.setUpdatedAt(LocalDateTime.of(2025, 4, 5, 12, 0));
-        coupon.setCreatedBy(UUID.randomUUID());
+        coupon.setStart_date(LocalDateTime.of(2025, 4, 10, 0, 0));
+        coupon.setEnd_date(LocalDateTime.of(2025, 5, 10, 0, 0));
+        coupon.setDeleted_at(null);
+        coupon.setCreated_at(LocalDateTime.of(2025, 4, 1, 12, 0));
+        coupon.setUpdated_at(LocalDateTime.of(2025, 4, 5, 12, 0));
+        coupon.setCreated_by(UUID.randomUUID());
 
         assertTrue(coupon.getCode().matches("FIXED-[A-Z0-9]{3}"));
-        assertEquals(CouponType.FIXED, coupon.getCouponType());
-        assertEquals(10.0, coupon.getDiscountAmount());
-        assertEquals(5, coupon.getMaxUsage());
-        assertEquals(0, coupon.getCurrentUsage());
+        assertEquals(CouponType.FIXED, coupon.getCoupon_type());
+        assertEquals(10.0, coupon.getDiscount_amount());
+        assertEquals(5, coupon.getMax_usage());
+        assertEquals(0, coupon.getCurrent_usage());
 
-        assertEquals(LocalDateTime.of(2025, 4, 10, 0, 0), coupon.getStartDate());
-        assertEquals(LocalDateTime.of(2025, 5, 10, 0, 0), coupon.getEndDate());
-        assertNull(coupon.getDeletedAt());
-        assertEquals(LocalDateTime.of(2025, 4, 1, 12, 0), coupon.getCreatedAt());
-        assertEquals(LocalDateTime.of(2025, 4, 5, 12, 0), coupon.getUpdatedAt());
-        assertNotNull(coupon.getCreatedBy());
+        assertEquals(LocalDateTime.of(2025, 4, 10, 0, 0), coupon.getStart_date());
+        assertEquals(LocalDateTime.of(2025, 5, 10, 0, 0), coupon.getEnd_date());
+        assertNull(coupon.getDeleted_at());
+        assertEquals(LocalDateTime.of(2025, 4, 1, 12, 0), coupon.getCreated_at());
+        assertEquals(LocalDateTime.of(2025, 4, 5, 12, 0), coupon.getUpdated_at());
+        assertNotNull(coupon.getCreated_by());
     }
 
 
@@ -40,15 +40,15 @@ public class CouponTest {
     void testIncrementUsage() {
         Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
         coupon.incrementUsage();
-        assertEquals(1, coupon.getCurrentUsage());
+        assertEquals(1, coupon.getCurrent_usage());
     }
 
     @Test
     void testIsValid() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 2);
-        coupon.setStartDate(LocalDateTime.now().minusDays(1));
-        coupon.setEndDate(LocalDateTime.now().plusDays(1));
-        coupon.setDeletedAt(null);
+        coupon.setStart_date(LocalDateTime.now().minusDays(1));
+        coupon.setEnd_date(LocalDateTime.now().plusDays(1));
+        coupon.setDeleted_at(null);
         assertTrue(coupon.isValid());
     }
 
@@ -80,7 +80,7 @@ public class CouponTest {
     }
 
     @Test
-    void testExceedMaxUsage() {
+    void testExceedMax_usage() {
         Coupon coupon = new Coupon(CouponType.RANDOM, 10.0, 1);
         coupon.incrementUsage();
         coupon.incrementUsage();
@@ -89,40 +89,40 @@ public class CouponTest {
     @Test
     void testCouponValidWithinDateRange() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3);
-        coupon.setStartDate(LocalDateTime.now().minusDays(1));
-        coupon.setEndDate(LocalDateTime.now().plusDays(1));
+        coupon.setStart_date(LocalDateTime.now().minusDays(1));
+        coupon.setEnd_date(LocalDateTime.now().plusDays(1));
         assertTrue(coupon.isValid());
     }
 
     @Test
-    void testCouponInvalidIfBeforeStartDate() {
+    void testCouponInvalidIfBeforeStart_date() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3);
-        coupon.setStartDate(LocalDateTime.now().plusDays(1));
-        coupon.setEndDate(LocalDateTime.now().plusDays(3));
+        coupon.setStart_date(LocalDateTime.now().plusDays(1));
+        coupon.setEnd_date(LocalDateTime.now().plusDays(3));
         assertFalse(coupon.isValid());
     }
 
     @Test
-    void testCouponInvalidIfAfterEndDate() {
+    void testCouponInvalidIfAfterEnd_date() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3);
-        coupon.setStartDate(LocalDateTime.now().minusDays(3));
-        coupon.setEndDate(LocalDateTime.now().minusDays(1));
+        coupon.setStart_date(LocalDateTime.now().minusDays(3));
+        coupon.setEnd_date(LocalDateTime.now().minusDays(1));
         assertFalse(coupon.isValid());
     }
 
     @Test
     void testCouponInvalidIfDeleted() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3);
-        coupon.setDeletedAt(LocalDateTime.now());
+        coupon.setDeleted_at(LocalDateTime.now());
         assertFalse(coupon.isValid());
     }
 
     @Test
     void testCouponValidIfAllConditionsMet() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3);
-        coupon.setStartDate(LocalDateTime.now().minusDays(1));
-        coupon.setEndDate(LocalDateTime.now().plusDays(1));
-        coupon.setDeletedAt(null);
+        coupon.setStart_date(LocalDateTime.now().minusDays(1));
+        coupon.setEnd_date(LocalDateTime.now().plusDays(1));
+        coupon.setDeleted_at(null);
         assertTrue(coupon.isValid());
     }
 
@@ -135,19 +135,19 @@ public class CouponTest {
         // Auto-generated fields
         assertNotNull(coupon.getId(), "ID should be auto-generated");
         assertTrue(coupon.getCode().matches("FIXED-[A-Z0-9]{3}"), "Code should match FIXED-XXX format");
-        assertEquals(0, coupon.getCurrentUsage(), "Current usage should be initialized to 0");
-        assertNotNull(coupon.getCreatedAt(), "CreatedAt should be set on creation");
+        assertEquals(0, coupon.getCurrent_usage(), "Current usage should be initialized to 0");
+        assertNotNull(coupon.getCreated_at(), "Created_at should be set on creation");
 
         // Auto-set startDate = createdAt
-        assertNotNull(coupon.getStartDate(), "StartDate should be set automatically");
-        assertFalse(coupon.getStartDate().isBefore(beforeCreation), "StartDate should not be before object creation");
-        assertFalse(coupon.getStartDate().isAfter(afterCreation), "StartDate should not be after test timestamp");
+        assertNotNull(coupon.getStart_date(), "Start_date should be set automatically");
+        assertFalse(coupon.getStart_date().isBefore(beforeCreation), "Start_date should not be before object creation");
+        assertFalse(coupon.getStart_date().isAfter(afterCreation), "Start_date should not be after test timestamp");
 
         // Fields that should be null
-        assertNull(coupon.getEndDate(), "EndDate should be null by default");
-        assertNull(coupon.getDeletedAt(), "DeletedAt should be null by default");
-        assertNull(coupon.getUpdatedAt(), "UpdatedAt should be null by default");
-        assertNull(coupon.getCreatedBy(), "CreatedBy should be null by default");
+        assertNull(coupon.getEnd_date(), "End_date should be null by default");
+        assertNull(coupon.getDeleted_at(), "Deleted_at should be null by default");
+        assertNull(coupon.getUpdated_at(), "Updated_at should be null by default");
+        assertNull(coupon.getCreated_by(), "Created_by should be null by default");
     }
 
 

@@ -13,44 +13,44 @@ public class Coupon {
 
     private UUID id;
     private String code;
-    private double discountAmount;
-    private CouponType couponType;
-    private int maxUsage;
-    private int currentUsage;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private UUID createdBy;
+    private double discount_amount;
+    private CouponType coupon_type;
+    private int max_usage;
+    private int current_usage;
+    private LocalDateTime start_date;
+    private LocalDateTime end_date;
+    private LocalDateTime deleted_at;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
+    private UUID created_by;
 
-    public Coupon(CouponType couponType, double discountAmount, int maxUsage) {
+    public Coupon(CouponType coupon_type, double discount_amount, int max_usage) {
         this.id = UUID.randomUUID();
-        this.couponType = couponType;
-        this.discountAmount = discountAmount;
-        this.maxUsage = maxUsage;
-        this.currentUsage = 0;
+        this.coupon_type = coupon_type;
+        this.discount_amount = discount_amount;
+        this.max_usage = max_usage;
+        this.current_usage = 0;
 
         String suffix = id.toString().replace("-", "").substring(0, 3).toUpperCase();
-        this.code = couponType.name() + "-" + suffix;
+        this.code = coupon_type.name() + "-" + suffix;
 
-        this.createdAt = LocalDateTime.now();
-        this.startDate = this.startDate != null ? this.startDate : this.createdAt;
+        this.created_at = LocalDateTime.now();
+        this.start_date = this.start_date != null ? this.start_date : this.created_at;
     }
 
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();
-        if (discountAmount < 0) return false;
-        if (currentUsage >= maxUsage) return false;
-        if (deletedAt != null) return false;
-        if (startDate != null && now.isBefore(startDate)) return false;
-        if (endDate != null && now.isAfter(endDate)) return false;
+        if (discount_amount < 0) return false;
+        if (current_usage >= max_usage) return false;
+        if (deleted_at != null) return false;
+        if (start_date != null && now.isBefore(start_date)) return false;
+        if (end_date != null && now.isAfter(end_date)) return false;
         return true;
     }
 
     public void incrementUsage() {
-        if (currentUsage < maxUsage) {
-            currentUsage++;
+        if (current_usage < max_usage) {
+            current_usage++;
         }
     }
 }
