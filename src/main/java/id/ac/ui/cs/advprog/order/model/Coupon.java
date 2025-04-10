@@ -30,8 +30,12 @@ public class Coupon {
         this.discountAmount = discountAmount;
         this.maxUsage = maxUsage;
         this.currentUsage = 0;
-        this.code = couponType.name() + "-" + index;
+
+        String suffix = id.toString().replace("-", "").substring(0, 3).toUpperCase();
+        this.code = couponType.name() + "-" + suffix;
+
         this.createdAt = LocalDateTime.now();
+        this.startDate = this.startDate != null ? this.startDate : this.createdAt;
     }
 
     public boolean isValid() {
