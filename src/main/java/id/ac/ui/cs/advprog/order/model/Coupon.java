@@ -4,26 +4,36 @@ import id.ac.ui.cs.advprog.order.enums.CouponType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Getter
 @Setter
 public class Coupon {
 
+    private UUID id;
     private String code;
+    private double discountAmount;
     private CouponType couponType;
-    private double value;
     private int maxUsage;
-    private int usedCount;
+    private int currentUsage;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime deletedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private UUID createdBy;
 
-    public Coupon(CouponType couponType, double value, int maxUsage, int id) {
+    public Coupon(CouponType discountType, double discountAmount, int maxUsage, int index) {
         // constructor body
     }
 
     public boolean isValid() {
-        // method body
+        // validation logic
         return false;
     }
 
     public void incrementUsage() {
-        // method body
+        // increment logic
     }
 }

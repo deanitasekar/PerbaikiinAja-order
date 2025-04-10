@@ -3,6 +3,10 @@ package id.ac.ui.cs.advprog.order;
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CouponTest {
@@ -20,9 +24,9 @@ public class CouponTest {
 
         assertEquals("FIXED-1", coupon.getCode());
         assertEquals(CouponType.FIXED, coupon.getCouponType());
-        assertEquals(10.0, coupon.getValue());
+        assertEquals(10.0, coupon.getDiscountAmount());
         assertEquals(5, coupon.getMaxUsage());
-        assertEquals(0, coupon.getUsedCount());
+        assertEquals(0, coupon.getCurrentUsage());
 
         assertEquals(LocalDateTime.of(2025, 4, 10, 0, 0), coupon.getStartDate());
         assertEquals(LocalDateTime.of(2025, 5, 10, 0, 0), coupon.getEndDate());
@@ -36,7 +40,7 @@ public class CouponTest {
     void testIncrementUsage() {
         Coupon coupon = new Coupon(CouponType.PERCENTAGE, 15.0, 3, 2);
         coupon.incrementUsage();
-        assertEquals(1, coupon.getUsedCount());
+        assertEquals(1, coupon.getCurrentUsage());
     }
 
     @Test
@@ -120,6 +124,15 @@ public class CouponTest {
         assertTrue(coupon.isValid());
     }
 
+    @Test
+    void testAutomaticFieldsOnCreation() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 25.0, 10, 99);
+
+        assertNotNull(coupon.getId(), "ID should be auto-generated");
+        assertEquals("FIXED-1", coupon.getCode(), "Code should be auto-generated using type and index");
+        assertEquals(0, coupon.getCurrentUsage(), "Current usage should be initialized to 0");
+        assertNotNull(coupon.getCreatedAt(), "CreatedAt should be set on creation");
+    }
 
 
 }
