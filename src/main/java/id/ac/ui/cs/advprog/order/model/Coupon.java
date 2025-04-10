@@ -24,16 +24,29 @@ public class Coupon {
     private LocalDateTime updatedAt;
     private UUID createdBy;
 
-    public Coupon(CouponType discountType, double discountAmount, int maxUsage, int index) {
-        // constructor body
+    public Coupon(CouponType couponType, double discountAmount, int maxUsage) {
+        this.id = UUID.randomUUID();
+        this.couponType = couponType;
+        this.discountAmount = discountAmount;
+        this.maxUsage = maxUsage;
+        this.currentUsage = 0;
+        this.code = couponType.name() + "-" + index;
+        this.createdAt = LocalDateTime.now();
     }
 
     public boolean isValid() {
-        // validation logic
-        return false;
+        LocalDateTime now = LocalDateTime.now();
+        if (discountAmount < 0) return false;
+        if (currentUsage >= maxUsage) return false;
+        if (deletedAt != null) return false;
+        if (startDate != null && now.isBefore(startDate)) return false;
+        if (endDate != null && now.isAfter(endDate)) return false;
+        return true;
     }
 
     public void incrementUsage() {
-        // increment logic
+        if (currentUsage < maxUsage) {
+            currentUsage++;
+        }
     }
 }
