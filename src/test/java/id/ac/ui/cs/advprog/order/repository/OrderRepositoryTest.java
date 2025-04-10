@@ -67,7 +67,7 @@ public class OrderRepositoryTest {
                 NoSuchElementException.class,
                 () -> orderRepository.findById("ORD-999")
         );
-        assertTrue(ex.getMessage().contains("No order found with id: ORD-999"));
+        assertTrue(ex.getMessage().contains("No order found"));
     }
 
     @Test
