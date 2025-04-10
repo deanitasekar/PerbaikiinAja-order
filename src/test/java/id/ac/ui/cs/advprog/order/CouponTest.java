@@ -7,15 +7,29 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CouponTest {
 
-    //Happy Path
     @Test
     void testCreateCoupon() {
         Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5, 1);
+        coupon.setCode("FIXED-1");
+        coupon.setStartDate(LocalDateTime.of(2025, 4, 10, 0, 0));
+        coupon.setEndDate(LocalDateTime.of(2025, 5, 10, 0, 0));
+        coupon.setDeletedAt(null);
+        coupon.setCreatedAt(LocalDateTime.of(2025, 4, 1, 12, 0));
+        coupon.setUpdatedAt(LocalDateTime.of(2025, 4, 5, 12, 0));
+        coupon.setCreatedBy(UUID.randomUUID());
+
         assertEquals("FIXED-1", coupon.getCode());
         assertEquals(CouponType.FIXED, coupon.getCouponType());
         assertEquals(10.0, coupon.getValue());
         assertEquals(5, coupon.getMaxUsage());
         assertEquals(0, coupon.getUsedCount());
+
+        assertEquals(LocalDateTime.of(2025, 4, 10, 0, 0), coupon.getStartDate());
+        assertEquals(LocalDateTime.of(2025, 5, 10, 0, 0), coupon.getEndDate());
+        assertNull(coupon.getDeletedAt());
+        assertEquals(LocalDateTime.of(2025, 4, 1, 12, 0), coupon.getCreatedAt());
+        assertEquals(LocalDateTime.of(2025, 4, 5, 12, 0), coupon.getUpdatedAt());
+        assertNotNull(coupon.getCreatedBy());
     }
 
     @Test
@@ -28,6 +42,9 @@ public class CouponTest {
     @Test
     void testIsValid() {
         Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 2, 3);
+        coupon.setStartDate(LocalDateTime.now().minusDays(1));
+        coupon.setEndDate(LocalDateTime.now().plusDays(1));
+        coupon.setDeletedAt(null);
         assertTrue(coupon.isValid());
     }
 
@@ -42,7 +59,6 @@ public class CouponTest {
 
 
 
-    //Unhappy Path
 
     @Test
     void testInvalidEnumParsing() {
@@ -64,6 +80,46 @@ public class CouponTest {
         coupon.incrementUsage();
         assertFalse(coupon.isValid());
     }
+    @Test
+    void testCouponValidWithinDateRange() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3, 1);
+        coupon.setStartDate(LocalDateTime.now().minusDays(1));
+        coupon.setEndDate(LocalDateTime.now().plusDays(1));
+        assertTrue(coupon.isValid());
+    }
+
+    @Test
+    void testCouponInvalidIfBeforeStartDate() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3, 1);
+        coupon.setStartDate(LocalDateTime.now().plusDays(1));
+        coupon.setEndDate(LocalDateTime.now().plusDays(3));
+        assertFalse(coupon.isValid());
+    }
+
+    @Test
+    void testCouponInvalidIfAfterEndDate() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3, 1);
+        coupon.setStartDate(LocalDateTime.now().minusDays(3));
+        coupon.setEndDate(LocalDateTime.now().minusDays(1));
+        assertFalse(coupon.isValid());
+    }
+
+    @Test
+    void testCouponInvalidIfDeleted() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3, 1);
+        coupon.setDeletedAt(LocalDateTime.now());
+        assertFalse(coupon.isValid());
+    }
+
+    @Test
+    void testCouponValidIfAllConditionsMet() {
+        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 3, 1);
+        coupon.setStartDate(LocalDateTime.now().minusDays(1));
+        coupon.setEndDate(LocalDateTime.now().plusDays(1));
+        coupon.setDeletedAt(null);
+        assertTrue(coupon.isValid());
+    }
+
 
 
 }
