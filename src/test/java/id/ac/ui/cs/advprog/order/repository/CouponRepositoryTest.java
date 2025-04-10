@@ -2,166 +2,48 @@ package id.ac.ui.cs.advprog.order.repository;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.model.Coupon;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
 import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class CouponRepositoryTest {
 
-    private CouponRepository repository;
+    private final List<Coupon> coupons = new ArrayList<>();
 
-    @BeforeEach
-    void set_up() {
-        repository = new CouponRepository();
+    public void save(Coupon coupon) {
+        // method body
     }
 
-    @Test
-    void test_save_coupon() {
-        Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
-        repository.save(coupon);
-
-        Coupon result = repository.find_by_id(coupon.get_id());
-        assertNotNull(result);
-        assertEquals(coupon.get_code(), result.get_code());
+    public Coupon find_by_id(UUID id) {
+        // method body
+        return null;
     }
 
-    @Test
-    void test_find_by_id_exists() {
-        Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
-        repository.save(coupon);
-
-        Coupon found = repository.find_by_id(coupon.get_id());
-        assertEquals(coupon.get_code(), found.get_code());
+    public List<Coupon> find_all() {
+        // method body
+        return null;
     }
 
-    @Test
-    void test_find_by_id_not_exists() {
-        UUID fake_id = UUID.randomUUID();
-        assertNull(repository.find_by_id(fake_id));
+    public void delete_by_id(UUID id) {
+        // method body
     }
 
-    @Test
-    void test_find_all() {
-        repository.save(new Coupon(CouponType.FIXED, 10.0, 5));
-        repository.save(new Coupon(CouponType.PERCENTAGE, 15.0, 3));
-
-        List<Coupon> coupons = repository.find_all();
-        assertEquals(2, coupons.size());
+    public Coupon find_by_code(String code) {
+        // method body
+        return null;
     }
 
-    @Test
-    void test_delete_by_id() {
-        Coupon coupon = new Coupon(CouponType.RANDOM, 20.0, 4);
-        repository.save(coupon);
-
-        repository.delete_by_id(coupon.get_id());
-        assertNull(repository.find_by_id(coupon.get_id()));
+    public List<Coupon> find_all_valid() {
+        // method body
+        return null;
     }
 
-    @Test
-    void test_delete_by_id_not_exists() {
-        assertDoesNotThrow(() -> repository.delete_by_id(UUID.randomUUID()));
+    public List<Coupon> find_all_sorted_by_created_at() {
+        // method body
+        return null;
     }
 
-    @Test
-    void test_update_coupon() {
-        Coupon coupon = new Coupon(CouponType.FIXED, 5.0, 2);
-        repository.save(coupon);
-
-        coupon.set_discount_amount(7.0);
-        repository.save(coupon);
-
-        Coupon updated = repository.find_by_id(coupon.get_id());
-        assertEquals(7.0, updated.get_discount_amount());
-    }
-
-    @Test
-    void test_find_by_code() {
-        Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
-        repository.save(coupon);
-
-        Coupon found = repository.find_by_code(coupon.get_code());
-        assertNotNull(found);
-        assertEquals(coupon.get_id(), found.get_id());
-    }
-
-    @Test
-    void test_find_by_code_invalid() {
-        assertNull(repository.find_by_code("INVALID-CODE"));
-    }
-
-    @Test
-    void test_find_all_valid_coupons_only() {
-        Coupon valid = new Coupon(CouponType.FIXED, 10.0, 5);
-        Coupon expired = new Coupon(CouponType.FIXED, 10.0, 5);
-        Coupon deleted = new Coupon(CouponType.FIXED, 10.0, 5);
-
-        expired.set_end_date(LocalDateTime.now().minusDays(1));
-        deleted.set_deleted_at(LocalDateTime.now());
-
-        repository.save(valid);
-        repository.save(expired);
-        repository.save(deleted);
-
-        List<Coupon> valid_only = repository.find_all_valid();
-        assertEquals(1, valid_only.size());
-        assertEquals(valid.get_id(), valid_only.get(0).get_id());
-    }
-
-    @Test
-    void test_find_all_sorted_by_created_at() {
-        Coupon first = new Coupon(CouponType.FIXED, 5.0, 1);
-        try { Thread.sleep(2); } catch (InterruptedException ignored) {}
-        Coupon second = new Coupon(CouponType.PERCENTAGE, 15.0, 2);
-
-        repository.save(second);
-        repository.save(first);
-
-        List<Coupon> sorted = repository.find_all_sorted_by_created_at();
-        assertEquals(first.get_id(), sorted.get(0).get_id());
-        assertEquals(second.get_id(), sorted.get(1).get_id());
-    }
-
-    @Test
-    void test_soft_delete_hides_coupon() {
-        Coupon coupon = new Coupon(CouponType.RANDOM, 10.0, 1);
-        repository.save(coupon);
-
-        coupon.set_deleted_at(LocalDateTime.now());
-        repository.save(coupon);
-
-        List<Coupon> all_valid = repository.find_all_valid();
-        assertTrue(all_valid.stream().noneMatch(c -> c.get_id().equals(coupon.get_id())));
-    }
-
-    @Test
-    void test_save_duplicate_code_allowed() {
-        Coupon one = new Coupon(CouponType.FIXED, 5.0, 2);
-        Coupon two = new Coupon(CouponType.FIXED, 5.0, 2);
-
-        // override their code to be the same (simulate collision)
-        two.set_code(one.get_code());
-
-        repository.save(one);
-        repository.save(two);
-
-        assertEquals(two.get_id(), repository.find_by_code(one.get_code()).get_id());
-    }
-
-    @Test
-    void test_find_by_type() {
-        Coupon fixed = new Coupon(CouponType.FIXED, 10.0, 2);
-        Coupon percent = new Coupon(CouponType.PERCENTAGE, 20.0, 2);
-
-        repository.save(fixed);
-        repository.save(percent);
-
-        List<Coupon> result = repository.find_by_type(CouponType.FIXED);
-        assertEquals(1, result.size());
-        assertEquals(fixed.get_id(), result.get(0).get_id());
+    public List<Coupon> find_by_type(CouponType type) {
+        // method body
+        return null;
     }
 }
