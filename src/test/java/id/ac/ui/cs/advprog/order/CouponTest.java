@@ -57,9 +57,11 @@ public class CouponTest {
         Coupon coupon1 = new Coupon(CouponType.FIXED, 10.0, 5);
         Coupon coupon2 = new Coupon(CouponType.FIXED, 20.0, 5);
 
-        assertEquals("FIXED-1", coupon1.getCode());
-        assertEquals("FIXED-2", coupon2.getCode());
+        assertTrue(coupon1.getCode().matches("FIXED-[A-Z0-9]{3}"));
+        assertTrue(coupon2.getCode().matches("FIXED-[A-Z0-9]{3}"));
+        assertNotEquals(coupon1.getCode(), coupon2.getCode());
     }
+
 
 
 
@@ -126,12 +128,26 @@ public class CouponTest {
 
     @Test
     void testAutomaticFieldsOnCreation() {
+        LocalDateTime beforeCreation = LocalDateTime.now();
         Coupon coupon = new Coupon(CouponType.FIXED, 25.0, 10);
+        LocalDateTime afterCreation = LocalDateTime.now();
 
+        // Auto-generated fields
         assertNotNull(coupon.getId(), "ID should be auto-generated");
-        assertEquals("FIXED-1", coupon.getCode(), "Code should be auto-generated using type and index");
+        assertTrue(coupon.getCode().matches("FIXED-[A-Z0-9]{3}"), "Code should match FIXED-XXX format");
         assertEquals(0, coupon.getCurrentUsage(), "Current usage should be initialized to 0");
         assertNotNull(coupon.getCreatedAt(), "CreatedAt should be set on creation");
+
+        // Auto-set startDate = createdAt
+        assertNotNull(coupon.getStartDate(), "StartDate should be set automatically");
+        assertFalse(coupon.getStartDate().isBefore(beforeCreation), "StartDate should not be before object creation");
+        assertFalse(coupon.getStartDate().isAfter(afterCreation), "StartDate should not be after test timestamp");
+
+        // Fields that should be null
+        assertNull(coupon.getEndDate(), "EndDate should be null by default");
+        assertNull(coupon.getDeletedAt(), "DeletedAt should be null by default");
+        assertNull(coupon.getUpdatedAt(), "UpdatedAt should be null by default");
+        assertNull(coupon.getCreatedBy(), "CreatedBy should be null by default");
     }
 
 
