@@ -4,46 +4,54 @@ import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CouponRepository {
 
     private final List<Coupon> coupons = new ArrayList<>();
 
     public void save(Coupon coupon) {
-        // TODO: implement save logic
+        delete_by_id(coupon.getId());
+        coupons.add(coupon);
     }
 
     public Coupon find_by_id(UUID id) {
-        // TODO: implement find by id
-        return null;
+        return coupons.stream()
+                .filter(c -> c.getId().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<Coupon> find_all() {
-        // TODO: implement find all
-        return null;
+        return new ArrayList<>(coupons);
     }
 
     public void delete_by_id(UUID id) {
-        // TODO: implement delete
+        coupons.removeIf(c -> c.getId().equals(id));
     }
 
     public Coupon find_by_code(String code) {
-        // TODO: implement find by code
-        return null;
+        return coupons.stream()
+                .filter(c -> c.getCode().equals(code))
+                .reduce((first, second) -> second) // return latest if duplicate
+                .orElse(null);
     }
 
     public List<Coupon> find_all_valid() {
-        // TODO: implement filter valid coupons
-        return null;
+        return coupons.stream()
+                .filter(Coupon::isValid)
+                .collect(Collectors.toList());
     }
 
     public List<Coupon> find_all_sorted_by_created_at() {
-        // TODO: implement sort by created_at
-        return null;
+        return coupons.stream()
+                .sorted(Comparator.comparing(Coupon::getCreated_at))
+                .collect(Collectors.toList());
     }
 
     public List<Coupon> find_by_type(CouponType type) {
-        // TODO: implement filter by type
-        return null;
+        return coupons.stream()
+                .filter(c -> c.getCoupon_type() == type)
+                .collect(Collectors.toList());
     }
 }
