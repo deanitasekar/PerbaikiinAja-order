@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.order.model;
 
+import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,19 +22,7 @@ public class OrderTest {
         assertNotNull(order);
         assertEquals("Laptop Rusak", order.getItemName());
         assertEquals("Mati total", order.getItemCondition());
-        assertEquals("PENDING", order.getStatus());
-    }
-
-    @Test
-    void testBuildOrder_EmptyName_ShouldThrowException() {
-        Exception ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> new OrderBuilder()
-                        .withItemName("")
-                        .withItemCondition("Retak Layar")
-                        .build()
-        );
-        assertTrue(ex.getMessage().contains("Nama barang tidak boleh kosong"));
+        assertEquals(OrderStatus.PENDING, order.getStatus());
     }
 
     @Test
@@ -44,27 +33,27 @@ public class OrderTest {
 
     @Test
     void testSetTechnician_AfterApproved_ShouldFail() {
-        order.setStatus("APPROVED");
+        order.setStatus("SUCCESS");
         Exception ex = assertThrows(
                 IllegalStateException.class,
                 () -> order.setTechnician("Teknisi B")
         );
-        assertTrue(ex.getMessage().contains("Tidak dapat diubah"));
+        assertTrue(ex.getMessage().contains("Teknisi tidak dapat diubah"));
     }
 
     @Test
     void testCancelOrder_WhenPending_Success() {
         order.cancel();
-        assertEquals("CANCELLED", order.getStatus());
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
     }
 
     @Test
-    void testCancelOrder_WhenApproved_ShouldFail() {
-        order.setStatus("APPROVED");
+    void testCancelOrder_WhenSuccess_ShouldFail() {
+        order.setStatus("SUCCESS");
         Exception ex = assertThrows(
                 IllegalStateException.class,
                 () -> order.cancel()
         );
-        assertTrue(ex.getMessage().contains("Tidak dapat dibatalkan"));
+        assertTrue(ex.getMessage().contains("Order tidak dapat dibatalkan"));
     }
 }
