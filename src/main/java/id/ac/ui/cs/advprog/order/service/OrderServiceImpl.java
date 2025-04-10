@@ -13,16 +13,20 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(Order order) {
-        return null;
+        orderRepository.save(order);
+        return order;
     }
 
     @Override
     public Order updateStatus(String orderId, String newStatus) {
-        return null;
+        Order existing = orderRepository.findById(orderId);
+        existing.setStatus(newStatus);
+        orderRepository.save(existing);
+        return existing;
     }
 
     @Override
     public Order findById(String orderId) {
-        return null;
+        return orderRepository.findById(orderId);
     }
 }
