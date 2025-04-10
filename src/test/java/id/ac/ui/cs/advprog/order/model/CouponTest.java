@@ -1,7 +1,6 @@
-package id.ac.ui.cs.advprog.order;
+package id.ac.ui.cs.advprog.order.model;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
-import id.ac.ui.cs.advprog.order.model.Coupon;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
