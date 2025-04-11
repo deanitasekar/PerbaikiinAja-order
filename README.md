@@ -74,11 +74,6 @@ DATABASE_URL=jdbc:postgresql://localhost:5432/perbaikiinaja
 DATABASE_USERNAME=your_db_username
 DATABASE_PASSWORD=your_db_password
 
-# Hibernate / JPA
-HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
-JPA_DDL_AUTO=update
-SHOW_SQL=true
-
 # JWT
 # The decoded secret must be at least 512 bits (64 bytes) in length.
 JWT_SECRET="your_jwt_secret_key"
