@@ -10,7 +10,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy the Gradle-built JAR
-COPY build/libs/authentication-0.0.1-SNAPSHOT.jar app.jar
+COPY build/libs/order-0.0.1-SNAPSHOT.jar app.jar
 
 # Optional: define JVM options
 ENV JAVA_OPTS=""
