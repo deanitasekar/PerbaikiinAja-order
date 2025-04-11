@@ -2,9 +2,9 @@ package id.ac.ui.cs.advprog.order.security;
 
 import java.security.Key;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -13,12 +13,8 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtTokenProvider {
 
-    private final String jwtSecret;
-
-    public JwtTokenProvider() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        this.jwtSecret = dotenv.get("JWT_SECRET");
-    }
+    @Value("${JWT_SECRET}")
+    private String jwtSecret;
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
