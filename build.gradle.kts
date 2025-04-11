@@ -37,7 +37,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
     runtimeOnly("org.postgresql:postgresql:42.6.0")
-    runtimeOnly("com.h2database:h2:2.2.220")
+    testImplementation("com.h2database:h2:2.2.220")
 
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
