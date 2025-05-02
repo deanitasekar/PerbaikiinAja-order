@@ -4,6 +4,6 @@ public class FixedCouponStrategy implements CouponStrategy {
 
     @Override
     public double apply(double price, double discount) {
-        return 0;
+        return Math.max(0, price - discount);
     }
 }
