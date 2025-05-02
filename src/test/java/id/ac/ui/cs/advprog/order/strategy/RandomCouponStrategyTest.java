@@ -11,7 +11,7 @@ class RandomCouponStrategyTest {
         double price = 100_000;
         double maxDiscount = 20_000;
 
-        double result = strategy.apply(price, maxDiscount, 0);
+        double result = strategy.apply(price, maxDiscount);
 
         assertTrue(result >= 80_000 && result <= 100_000,
                 "Result should be between 80k and 100k but was " + result);
