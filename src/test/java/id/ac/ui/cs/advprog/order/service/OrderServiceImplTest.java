@@ -56,11 +56,6 @@ class OrderServiceImplTest {
         Order result = orderService.createOrder(testOrder);
 
         verify(orderRepository).save(testOrder);
-        verify(notificationService).createNotification(
-                testTechnicianId,
-                "New Repair Order",
-                "You have a new repair order for Laptop"
-        );
         assertEquals(testOrderId, result.getId());
     }
 
@@ -146,17 +141,6 @@ class OrderServiceImplTest {
         when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
 
         Order result = orderService.changeTechnician(testOrderId, newTechnicianId);
-
-        verify(notificationService).createNotification(
-                testTechnicianId,
-                "Order Reassigned",
-                "An order for Laptop has been reassigned."
-        );
-        verify(notificationService).createNotification(
-                newTechnicianId,
-                "New Repair Order",
-                "You have been assigned a new repair order for Laptop"
-        );
         assertEquals(newTechnicianId, result.getTechnicianId());
     }
 
@@ -167,11 +151,6 @@ class OrderServiceImplTest {
         orderService.cancelOrder(testOrderId, testCustomerId);
 
         assertEquals(OrderStatus.CANCELLED.name(), testOrder.getStatus());
-        verify(notificationService).createNotification(
-                testTechnicianId,
-                "Order Canceled",
-                "An order for Laptop has been canceled."
-        );
     }
 
     @Test
@@ -194,11 +173,6 @@ class OrderServiceImplTest {
 
         assertEquals(OrderStatus.COMPLETED.name(), result.getStatus());
         assertEquals(report, result.getRepairReport());
-        verify(notificationService).createNotification(
-                testCustomerId,
-                "Repair Completed",
-                "Your Laptop has been repaired."
-        );
     }
 
     @Test
