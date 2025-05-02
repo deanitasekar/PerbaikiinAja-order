@@ -5,10 +5,11 @@ import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
 import lombok.Getter;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Getter
 public class OrderBuilder {
-    private String customerId;
+    private UUID customerId;
     private String itemName;
     private String itemCondition;
     private String repairRequest;
@@ -16,12 +17,12 @@ public class OrderBuilder {
     private String paymentMethod;
 
     private String status;
-    private String technicianId;
+    private UUID technicianId;
     private boolean usingCoupon;
     private String couponCode;
     private String paymentDetails;
 
-    public OrderBuilder(String customerId, String itemName, String itemCondition,
+    public OrderBuilder(UUID customerId, String itemName, String itemCondition,
                         String repairRequest, Date serviceDate, PaymentMethod paymentMethod) {
         this.customerId = customerId;
         this.itemName = itemName;
@@ -38,24 +39,15 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder setStatus(String status) {
-        if (OrderStatus.contains(status)) {
-            this.status = status;
-        } else {
-            throw new IllegalArgumentException("Invalid order status: " + status);
-        }
-        return this;
-    }
-
-    public OrderBuilder setTechnicianId(String technicianId) {
-        if (technicianId != null && !technicianId.isEmpty()) {
+    public OrderBuilder setTechnicianId(UUID technicianId) {
+        if (technicianId != null) {
             this.technicianId = technicianId;
             this.status = OrderStatus.WAITING_APPROVAL.name();
         }
         return this;
     }
 
-    public OrderBuilder setRandomTechnician(String[] availableTechnicianIds) {
+    public OrderBuilder setRandomTechnician(UUID[] availableTechnicianIds) {
         if (availableTechnicianIds != null && availableTechnicianIds.length > 0) {
             java.util.Random random = new java.util.Random();
             int randomIndex = random.nextInt(availableTechnicianIds.length);

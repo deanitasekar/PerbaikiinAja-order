@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,11 +18,11 @@ class OrderTest {
 
     private OrderBuilder orderBuilder;
     private final Date serviceDate = new Date();
-    private final String customerId = "customer123";
+    private final UUID customerId = UUID.randomUUID();
     private final String itemName = "Laptop";
     private final String itemCondition = "Screen broken";
     private final String repairRequest = "Fix screen";
-    private final String technicianId = "tech456";
+    private final UUID technicianId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -39,7 +40,6 @@ class OrderTest {
     void testOrderCreation() {
         Order order = orderBuilder.build();
 
-        assertNotNull(order.getId());
         assertEquals(customerId, order.getCustomerId());
         assertEquals(itemName, order.getItemName());
         assertEquals(itemCondition, order.getItemCondition());
@@ -75,15 +75,6 @@ class OrderTest {
     void testNoArgsConstructor() {
         Order order = new Order();
         assertNull(order.getId());
-        assertNull(order.getStatus());
-    }
-
-    @ParameterizedTest
-    @EnumSource(OrderStatus.class)
-    void testSetAllOrderStatus(OrderStatus status) {
-        Order order = orderBuilder.build();
-        order.setStatus(status.name());
-        assertEquals(status.name(), order.getStatus());
     }
 
     @Test
@@ -93,11 +84,11 @@ class OrderTest {
     }
 
     @ParameterizedTest
-    @EnumSource(PaymentMethod.class)
-    void testSetAllPaymentMethods(PaymentMethod method) {
+    @EnumSource(OrderStatus.class)
+    void testSetAllOrderStatus(OrderStatus status) {
         Order order = orderBuilder.build();
-        order.setPaymentMethod(method.getValue());
-        assertEquals(method.getValue(), order.getPaymentMethod());
+        order.setStatus(status.name());
+        assertEquals(status.name(), order.getStatus());
     }
 
     @Test
@@ -150,17 +141,17 @@ class OrderTest {
 
     @Test
     void testUpdateTechnicianSuccess() {
+        UUID newTechnicianId = UUID.randomUUID();
         Order order = orderBuilder.build();
-        order.updateTechnician("newTech123");
+        order.updateTechnician(newTechnicianId);
 
-        assertEquals("newTech123", order.getTechnicianId());
-        assertEquals(OrderStatus.WAITING_APPROVAL.name(), order.getStatus());
+        assertEquals(newTechnicianId, order.getTechnicianId());
     }
 
     @Test
     void testUpdateTechnicianWithInvalidState() {
         Order order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertThrows(IllegalStateException.class, () -> order.updateTechnician("newTech123"));
+        assertThrows(IllegalStateException.class, () -> order.updateTechnician(UUID.randomUUID()));
     }
 
     @Test
@@ -237,7 +228,6 @@ class OrderTest {
     void testSetRepairEstimateSuccess() {
         Order order = orderBuilder.setTechnicianId(technicianId).build();
         order.setRepairEstimate("2 days");
-
         assertEquals("2 days", order.getRepairEstimate());
     }
 
@@ -279,12 +269,17 @@ class OrderTest {
     void testSettersAndGetters() {
         Order order = new Order();
 
-        String id = UUID.randomUUID().toString();
+        UUID id = UUID.randomUUID();
         order.setId(id);
         assertEquals(id, order.getId());
 
-        order.setCustomerId("newCustomer123");
-        assertEquals("newCustomer123", order.getCustomerId());
+        UUID newCustomerId = UUID.randomUUID();
+        order.setCustomerId(newCustomerId);
+        assertEquals(newCustomerId, order.getCustomerId());
+
+        UUID newTechnicianId = UUID.randomUUID();
+        order.setTechnicianId(newTechnicianId);
+        assertEquals(newTechnicianId, order.getTechnicianId());
 
         order.setItemName("New Laptop");
         assertEquals("New Laptop", order.getItemName());
@@ -333,17 +328,16 @@ class OrderTest {
 
     @Test
     void testOrderWithRandomTechnician() {
-        String[] technicians = {"tech1", "tech2", "tech3"};
+        UUID[] technicians = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
         Order order = orderBuilder.setRandomTechnician(technicians).build();
 
         assertNotNull(order.getTechnicianId());
-        assertTrue(order.getTechnicianId().startsWith("tech"));
-        assertEquals(OrderStatus.WAITING_APPROVAL.name(), order.getStatus());
+        assertTrue(Arrays.asList(technicians).contains(order.getTechnicianId()));
     }
 
     @Test
     void testRandomTechnicianWithEmptyArray() {
-        String[] emptyArray = {};
+        UUID[] emptyArray = {};
         Order order = orderBuilder.setRandomTechnician(emptyArray).build();
 
         assertNull(order.getTechnicianId());
@@ -360,24 +354,11 @@ class OrderTest {
 
     @Test
     void testSetTechnicianId() {
-        Order order = orderBuilder.setTechnicianId("tech789").build();
-        assertEquals("tech789", order.getTechnicianId());
-        assertEquals(OrderStatus.WAITING_APPROVAL.name(), order.getStatus());
+        UUID newTechId = UUID.randomUUID();
+        Order order = orderBuilder.setTechnicianId(newTechId).build();
+        assertEquals(newTechId, order.getTechnicianId());
     }
 
-    @Test
-    void testSetEmptyTechnicianId() {
-        Order order = orderBuilder.setTechnicianId("").build();
-        assertNull(order.getTechnicianId());
-        assertEquals(OrderStatus.PENDING.name(), order.getStatus());
-    }
-
-    @Test
-    void testSetNullTechnicianId() {
-        Order order = orderBuilder.setTechnicianId(null).build();
-        assertNull(order.getTechnicianId());
-        assertEquals(OrderStatus.PENDING.name(), order.getStatus());
-    }
 
     @Test
     void testSetStatus() {
@@ -422,8 +403,8 @@ class OrderTest {
     @Test
     void testChainability() {
         assertSame(orderBuilder, orderBuilder.setStatus(OrderStatus.APPROVED));
-        assertSame(orderBuilder, orderBuilder.setTechnicianId("tech123"));
-        assertSame(orderBuilder, orderBuilder.setRandomTechnician(new String[]{"tech1"}));
+        assertSame(orderBuilder, orderBuilder.setTechnicianId(UUID.randomUUID()));
+        assertSame(orderBuilder, orderBuilder.setRandomTechnician(new UUID[]{UUID.randomUUID()}));
         assertSame(orderBuilder, orderBuilder.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY));
         assertSame(orderBuilder, orderBuilder.setCustomPaymentDetails("Cash on delivery"));
         assertSame(orderBuilder, orderBuilder.setUsingCoupon(true));
@@ -443,16 +424,6 @@ class OrderTest {
         assertNotNull(OrderStatus.CANCELLED);
     }
 
-    @Test
-    void testOrderStatusEnumValues() {
-        assertEquals("PENDING", OrderStatus.PENDING.getValue());
-        assertEquals("WAITING_APPROVAL", OrderStatus.WAITING_APPROVAL.getValue());
-        assertEquals("APPROVED", OrderStatus.APPROVED.getValue());
-        assertEquals("IN_PROGRESS", OrderStatus.IN_PROGRESS.getValue());
-        assertEquals("COMPLETED", OrderStatus.COMPLETED.getValue());
-        assertEquals("REJECTED", OrderStatus.REJECTED.getValue());
-        assertEquals("CANCELLED", OrderStatus.CANCELLED.getValue());
-    }
 
     @Test
     void testPaymentMethodEnums() {

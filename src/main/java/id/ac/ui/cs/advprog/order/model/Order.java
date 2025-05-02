@@ -18,16 +18,16 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
-    private String id;
+    private UUID id;
 
     @Column(name = "status", nullable = false)
     private String status;
 
     @Column(name = "customer_id", nullable = false)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = "technician_id")
-    private String technicianId;
+    private UUID technicianId;
 
     @Column(name = "item_name", nullable = false)
     private String itemName;
@@ -69,7 +69,6 @@ public class Order {
     private Date updatedAt;
 
     public Order(OrderBuilder builder) {
-        this.id = UUID.randomUUID().toString();
         this.customerId = builder.getCustomerId();
         this.itemName = builder.getItemName();
         this.itemCondition = builder.getItemCondition();
@@ -121,7 +120,7 @@ public class Order {
                 this.status.equals(OrderStatus.WAITING_APPROVAL.name());
     }
 
-    public void updateTechnician(String technicianId) {
+    public void updateTechnician(UUID technicianId) {
         if (!canBeUpdated()) {
             throw new IllegalStateException("Order cannot be updated in current status: " + this.status);
         }
