@@ -10,10 +10,12 @@ public class CouponRepository {
 
     private final List<Coupon> coupons = new ArrayList<>();
 
-    public void save(Coupon coupon) {
+    public Coupon save(Coupon coupon) {
         deleteById(coupon.getId());
         coupons.add(coupon);
+        return coupon;
     }
+
 
     public Coupon findById(UUID id) {
         return coupons.stream()
