@@ -5,8 +5,11 @@ import lombok.Getter;
 @Getter
 public enum OrderStatus {
     PENDING("PENDING"),
-    FAILED("FAILED"),
-    SUCCESS("SUCCESS"),
+    WAITING_APPROVAL("WAITING_APPROVAL"),
+    APPROVED("APPROVED"),
+    IN_PROGRESS("IN_PROGRESS"),
+    COMPLETED("COMPLETED"),
+    REJECTED("REJECTED"),
     CANCELLED("CANCELLED");
 
     private final String value;
@@ -24,4 +27,3 @@ public enum OrderStatus {
         return false;
     }
 }
-

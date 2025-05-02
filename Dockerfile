@@ -1,42 +1,22 @@
-FROM docker.io/library/eclipse-temurin:21-jdk-alpine@sha256:cafcfad1d9d3b6e7dd983fa367f085ca1c846ce792da59bcb420ac4424296d56 AS builder
+FROM ubuntu:latest
+LABEL authors="Ghina Nabila"
 
+ENTRYPOINT ["top", "-b"]
 
- WORKDIR /src/order
+# Use official OpenJDK 21 slim base image
+FROM openjdk:21-jdk-slim
 
+# Set working directory inside container
+WORKDIR /app
 
- COPY build.gradle.kts settings.gradle.kts gradlew ./
- COPY gradle ./gradle
+# Copy the Gradle-built JAR
+COPY build/libs/order-0.0.1-SNAPSHOT.jar app.jar
 
+# Optional: define JVM options
+ENV JAVA_OPTS=""
 
- RUN chmod +x gradlew
- RUN ./gradlew dependencies --no-daemon
+# Expose port 8080
+EXPOSE 8080
 
-
- COPY src ./src
-
-
- RUN ./gradlew bootJar --no-daemon
-
-
- FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:4e9ab608d97796571b1d5bbcd1c9f430a89a5f03fe5aa6c093888ceb6756c502 AS runner
-
-
- ARG USER_NAME=order
- ARG USER_UID=1000
- ARG USER_GID=${USER_UID}
-
-
- RUN addgroup -g ${USER_GID} ${USER_NAME} \
-    && adduser -h /opt/order -D -u ${USER_UID} -G ${USER_NAME} ${USER_NAME}
-
-
- USER ${USER_NAME}
- WORKDIR /opt/order
- COPY --from=builder --chown=${USER_UID}:${USER_GID} /src/order/build/libs/*.jar app.jar
-
-
- EXPOSE 8080
-
-
- ENTRYPOINT ["java"]
- CMD ["-jar", "app.jar"]
+# Run the Spring Boot application
+ENTRYPOINT exec java $JAVA_OPTS -jar app.jar

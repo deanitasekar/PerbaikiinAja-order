@@ -24,41 +24,44 @@ repositories {
     mavenCentral()
 }
 
-val seleniumJavaVersion = "4.14.1"
-val seleniumJupiterVersion = "5.0.1"
-val webdrivermanagerVersion = "5.6.3"
-val junitJupiterVersion = "5.9.1"
-
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    testImplementation("org.springframework.security:spring-security-test:6.0.2")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+    runtimeOnly("org.postgresql:postgresql:42.6.0")
+    testImplementation("com.h2database:h2:2.2.220")
+
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumJavaVersion")
-    testImplementation("io.github.bonigarcia:selenium-jupiter:$seleniumJupiterVersion")
-    testImplementation("io.github.bonigarcia:webdrivermanager:$webdrivermanagerVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
 }
 
-tasks.register<Test>("unitTest"){
-    description = "Runs unit test."
+tasks.register<Test>("unitTest") {
+    description = "Runs unit tests."
     group = "verification"
 
-    filter{
+    filter {
         excludeTestsMatching("*FunctionalTest")
     }
 }
 
-tasks.register<Test>("functionalTest"){
-    description = "Runs functional test."
+tasks.register<Test>("functionalTest") {
+    description = "Runs functional tests."
     group = "verification"
 
-    filter{
-        excludeTestsMatching("*FunctionalTest")
+    filter {
+        includeTestsMatching("*FunctionalTest")
     }
 }
 
@@ -74,6 +77,6 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
 
-tasks.jacocoTestReport{
+tasks.jacocoTestReport {
     dependsOn(tasks.test)
 }

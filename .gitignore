@@ -37,4 +37,4 @@ out/
 .vscode/
 
 # Environment files (do not commit sensitive info)
- .env
+.env

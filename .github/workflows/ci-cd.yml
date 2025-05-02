@@ -1,153 +1,160 @@
-name: CI/CD Pipeline
+name: CI/CD Workflows
 
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-  on:
-    push:
-      branches:
-        - order
-    pull_request:
+permissions: read-all
 
+jobs:
+  # Test Job
+  test:
+    name: Run tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out the Git repository
+        uses: actions/checkout@v4
 
-  permissions:
-    contents: read
+      - name: Set up Java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-  jobs:
-    test:
-      name: Run tests
-      runs-on: ubuntu-22.04
+      - name: Run unit tests
+        run: ./gradlew test
 
+  # PMD Analysis Job
+  pmd:
+    name: PMD Code Analysis
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out the Git repository
+        uses: actions/checkout@v4
 
-      services:
-        postgres:
-          image: postgres:15-alpine
-          env:
-            POSTGRES_DB: profile_db
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-          ports:
-            - 5432:5432
-          options: >-
-            --health-cmd pg_isready
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
-      
+      - name: Set up Java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
 
-      steps:
-        - name: Check out the Git repository
-          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run PMD
+        uses: pmd/pmd-github-action@v2
+        with:
+          version: '7.0.0-rc4'
+          sourcePath: 'src/main/java'
+          rulesets: 'rulesets/java/quickstart.xml'
+          analyzeModifiedFilesOnly: false
 
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pmd-report.sarif
 
-        - name: Set up Java toolchain
-          uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
-          with:
-            distribution: "temurin"
-            java-version: "21"
-            cache: "gradle"
+  # Scorecard Security Analysis Job
+  scorecard:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+      - name: 'Run analysis'
+        uses: ossf/scorecard-action@0864cf19026789058feabb7e87baa5f140aac736 # v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
 
-        - name: Add gradlew permission
-          run: chmod +x gradlew
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
 
+      - name: 'Upload to code-scanning'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
 
-        - name: Run unit tests
-          run: ./gradlew test
-          env:
-            SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/profile_db
-            SPRING_DATASOURCE_USERNAME: postgres
-            SPRING_DATASOURCE_PASSWORD: postgres
+  # Deployment to EC2 Job
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: [pmd, scorecard]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-    deploy:
-      name: Deploy to EC2
-      needs: test
-      runs-on: ubuntu-latest
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+      - name: Grant execute permission to Gradle wrapper
+        run: chmod +x gradlew
 
+      - name: Build with Gradle Kotlin DSL (skip tests)
+        run: ./gradlew build -x test
 
-      steps:
-        - name: Checkout the files
-          uses: actions/checkout@v2
+      - name: Confirm JAR exists
+        run: ls -lh build/libs
 
+      - name: Copy JAR and Dockerfile to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "build/libs/*.jar,Dockerfile"
+          target: /home/ubuntu/app
 
-        - name: Deploy to EC2
-          uses: appleboy/ssh-action@master
-          with:
-            host: ${{ secrets.HOST_DNS }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.EC2_SSH_KEY }}
-            script: |
-              
-              REPO_NAME="order"
-              
-              cd ~
-              
-              # Check if the repo exists, if so pull latest changes, otherwise clone
-              if [ -d "$REPO_NAME" ]; then
-                cd $REPO_NAME
-                git fetch
-                git checkout ${{ github.ref_name }}
-                git pull
-              else
-                git clone -b ${{ github.ref_name }} https://github.com/${{ github.repository }}.git $REPO_NAME
-                cd $REPO_NAME
-              fi
-              
-              # Install Docker if not already installed
-              if ! [ -x "$(command -v docker)" ]; then
-                echo 'Installing Docker...'
-                sudo apt-get update
-                sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-              
-                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-              
-                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-              
-                sudo apt-get update
-                sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-              fi
-              
-              # Check if docker compose is available (either as plugin or standalone)
-              if docker compose version > /dev/null 2>&1; then
-                # Docker Compose plugin is available
-                echo "Using Docker Compose plugin"
-              
-                # Stop and remove containers if they exist
-                sudo docker compose down
-              
-                # Build and start containers
-                sudo docker compose build
-                sudo docker compose up -d
-              
-                # Show running containers
-                sudo docker compose ps
-              elif [ -x "$(command -v docker-compose)" ]; then
-                # Docker Compose standalone is available
-                echo "Using Docker Compose standalone"
-              
-                # Stop and remove containers if they exist
-                sudo docker-compose down
-              
-                # Build and start containers
-                sudo docker-compose build
-                sudo docker-compose up -d
-              
-                # Show running containers
-                sudo docker-compose ps
-              else
-                # Install Docker Compose
-                echo "Installing Docker Compose..."
-                sudo apt-get update
-                sudo apt-get install -y docker-compose-plugin
-              
-                # Stop and remove containers if they exist
-                sudo docker compose down
-              
-                # Build and start containers
-                sudo docker compose build
-                sudo docker compose up -d
-              
-                # Show running containers
-                sudo docker compose ps
-              fi
+      - name: SSH and deploy with Docker and create .env
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            
+            # Rename JAR file if it exists (assuming only one JAR exists)
+            if ls *.jar 1> /dev/null 2>&1; then
+              mv *.jar app.jar
+            fi
+            
+            # Install Docker if not installed
+            if ! command -v docker &> /dev/null; then
+              sudo apt update -y
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo usermod -aG docker ubuntu
+            fi
+            
+            # Create .env file with deployment configuration
+            cat <<EOF > .env
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+            
+            # Deploy using Docker commands
+            mv build/libs/*.jar app.jar || true
+            docker stop springboot-app || true
+            docker rm springboot-app || true
+            docker build -t springboot-app .
+            docker run -d -p 8080:8080 --name springboot-app --env-file .env springboot-app
