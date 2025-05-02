@@ -11,45 +11,45 @@ public class CouponRepository {
     private final List<Coupon> coupons = new ArrayList<>();
 
     public void save(Coupon coupon) {
-        delete_by_id(coupon.getId());
+        deleteById(coupon.getId());
         coupons.add(coupon);
     }
 
-    public Coupon find_by_id(UUID id) {
+    public Coupon findById(UUID id) {
         return coupons.stream()
                 .filter(c -> c.getId().equals(id))
                 .findFirst()
                 .orElse(null);
     }
 
-    public List<Coupon> find_all() {
+    public List<Coupon> findAll() {
         return new ArrayList<>(coupons);
     }
 
-    public void delete_by_id(UUID id) {
+    public void deleteById(UUID id) {
         coupons.removeIf(c -> c.getId().equals(id));
     }
 
-    public Coupon find_by_code(String code) {
+    public Coupon findByCode(String code) {
         return coupons.stream()
                 .filter(c -> c.getCode().equals(code))
-                .reduce((first, second) -> second) // return latest if duplicate
+                .reduce((first, second) -> second)
                 .orElse(null);
     }
 
-    public List<Coupon> find_all_valid() {
+    public List<Coupon> findAllValid() {
         return coupons.stream()
                 .filter(Coupon::isValid)
                 .collect(Collectors.toList());
     }
 
-    public List<Coupon> find_all_sorted_by_created_at() {
+    public List<Coupon> findAllSortedByCreatedAt() {
         return coupons.stream()
                 .sorted(Comparator.comparing(Coupon::getCreated_at))
                 .collect(Collectors.toList());
     }
 
-    public List<Coupon> find_by_type(CouponType type) {
+    public List<Coupon> findByType(CouponType type) {
         return coupons.stream()
                 .filter(c -> c.getCoupon_type() == type)
                 .collect(Collectors.toList());
