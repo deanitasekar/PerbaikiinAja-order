@@ -18,7 +18,7 @@ class FixedCouponStrategyTest {
     @Test
     void testFixedDiscountNotNegative() {
         FixedCouponStrategy strategy = new FixedCouponStrategy();
-        double result = strategy.apply(10.0, 20.0, 0);
+        double result = strategy.apply(10.0, 20.0);
         assertEquals(0.0, result);
     }
 }
