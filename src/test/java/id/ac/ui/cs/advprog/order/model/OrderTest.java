@@ -1,5 +1,4 @@
-test model OrderTest
-        package id.ac.ui.cs.advprog.order.model;
+package id.ac.ui.cs.advprog.order.model;
 
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
