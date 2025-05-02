@@ -22,5 +22,14 @@ public enum PaymentMethod {
         }
         return false;
     }
+
+    public static PaymentMethod fromValue(String value) {
+        for (PaymentMethod method : PaymentMethod.values()) {
+            if (method.getValue().equals(value)) {
+                return method;
+            }
+        }
+        throw new IllegalArgumentException("Invalid payment method: " + value);
+    }
 }
 
