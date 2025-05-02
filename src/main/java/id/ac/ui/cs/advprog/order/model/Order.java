@@ -1,105 +1,118 @@
 package id.ac.ui.cs.advprog.order.model;
+
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 
+import java.util.Date;
+import java.util.UUID;
+
+@Getter @Setter
+@Entity
+@Table(name = "orders")
+@NoArgsConstructor
 public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false)
+    private String id;
 
-    private String orderId;
+    @Column(name = "status", nullable = false)
+    private String status;
+
+    @Column(name = "customer_id", nullable = false)
+    private String customerId;
+
+    @Column(name = "technician_id")
+    private String technicianId;
+
+    @Column(name = "item_name", nullable = false)
     private String itemName;
+
+    @Column(name = "item_condition", nullable = false, columnDefinition = "TEXT")
     private String itemCondition;
-    private String technician;
 
-    private OrderStatus status;
-    private PaymentMethod paymentMethod;
+    @Column(name = "repair_request", nullable = false, columnDefinition = "TEXT")
+    private String repairRequest;
 
-    public Order(String orderId, String itemName, String itemCondition,
-                 String statusStr, String paymentMethodStr) {
-        this.orderId = orderId;
-        this.itemName = itemName;
-        this.itemCondition = itemCondition;
+    @Column(name = "service_date", nullable = false)
+    private Date serviceDate;
 
-        if (!OrderStatus.contains(statusStr)) {
-            throw new IllegalArgumentException("Invalid OrderStatus");
-        }
-        this.status = OrderStatus.valueOf(statusStr);
+    @Column(name = "payment_method", nullable = false)
+    private String paymentMethod;
 
-        if (!PaymentMethod.contains(paymentMethodStr)) {
-            throw new IllegalArgumentException("Invalid PaymentMethod");
-        }
-        this.paymentMethod = PaymentMethod.valueOf(paymentMethodStr);
+    @Column(name = "payment_details")
+    private String paymentDetails;
+
+    @Column(name = "using_coupon")
+    private boolean usingCoupon;
+
+    @Column(name = "coupon_code")
+    private String couponCode;
+
+    @Column(name = "repair_estimate")
+    private String repairEstimate;
+
+    @Column(name = "repair_price")
+    private Double repairPrice;
+
+    @Column(name = "repair_report", columnDefinition = "TEXT")
+    private String repairReport;
+
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    public Order(OrderBuilder builder) {
     }
 
-    public String getOrderId() {
-        return orderId;
+    public void setStatus(String status) {
     }
 
-    public String getItemName() {
-        return itemName;
+    public void setPaymentMethod(String paymentMethod) {
     }
 
-    public String getItemCondition() {
-        return itemCondition;
+    public OrderStatus getOrderStatus() {
     }
 
-    public String getTechnician() {
-        return technician;
+    public PaymentMethod getPaymentMethodEnum() {
     }
 
-    public OrderStatus getStatus() {
-        return status;
+    public boolean canBeUpdated() {
     }
 
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
+    public boolean canBeCancelled() {
     }
 
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
-    public void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    public void setItemCondition(String itemCondition) {
-        this.itemCondition = itemCondition;
-    }
-
-    public void setTechnician(String newTechnician) {
-        if (this.status != OrderStatus.PENDING) {
-            throw new IllegalStateException("Teknisi tidak dapat diubah");
-        }
-        this.technician = newTechnician;
-    }
-
-    public void setStatus(String newStatusStr) {
-        if (!OrderStatus.contains(newStatusStr)) {
-            throw new IllegalArgumentException("Invalid status");
-        }
-        this.status = OrderStatus.valueOf(newStatusStr);
-    }
-
-
-    public void setStatus(OrderStatus newStatus) {
-        this.status = newStatus;
-    }
-
-    public void setPaymentMethod(String paymentMethodStr) {
-        if (!PaymentMethod.contains(paymentMethodStr)) {
-            throw new IllegalArgumentException("Invalid payment method");
-        }
-        this.paymentMethod = PaymentMethod.valueOf(paymentMethodStr);
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
+    public void updateTechnician(String technicianId) {
     }
 
     public void cancel() {
-        if (this.status != OrderStatus.PENDING) {
-            throw new IllegalStateException("Order tidak dapat dibatalkan");
-        }
-        this.status = OrderStatus.CANCELLED;
+    }
+
+    public void approve() {
+    }
+
+    public void reject() {
+    }
+
+    public void startProgress() {
+    }
+
+    public void complete() {
+    }
+
+    public void setRepairEstimate(String repairEstimate) {
+    }
+
+    public void setRepairPrice(Double repairPrice) {
+    }
+
+    public void setRepairReport(String repairReport) {
     }
 }
