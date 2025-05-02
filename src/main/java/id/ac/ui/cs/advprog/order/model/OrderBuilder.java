@@ -2,61 +2,53 @@ package id.ac.ui.cs.advprog.order.model;
 
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
+import lombok.Getter;
 
+import java.util.Date;
+
+@Getter
 public class OrderBuilder {
-
-    private String orderId;
+    private String customerId;
     private String itemName;
     private String itemCondition;
-    private String technician;
+    private String repairRequest;
+    private Date serviceDate;
+    private String paymentMethod;
 
-    private OrderStatus status = OrderStatus.PENDING;
-    private PaymentMethod paymentMethod = PaymentMethod.BANK_TRANSFER;
+    private String status;
+    private String technicianId;
+    private boolean usingCoupon;
+    private String couponCode;
+    private String paymentDetails;
 
-    public OrderBuilder withOrderId(String orderId) {
-        this.orderId = orderId;
-        return this;
+    public OrderBuilder(String customerId, String itemName, String itemCondition,
+                        String repairRequest, Date serviceDate, PaymentMethod paymentMethod) {
     }
 
-    public OrderBuilder withItemName(String itemName) {
-        this.itemName = itemName;
-        return this;
+    public OrderBuilder setStatus(OrderStatus status) {
     }
 
-    public OrderBuilder withItemCondition(String itemCondition) {
-        this.itemCondition = itemCondition;
-        return this;
+    public OrderBuilder setStatus(String status) {
     }
 
-    public OrderBuilder withTechnician(String technician) {
-        this.technician = technician;
-        return this;
+    public OrderBuilder setTechnicianId(String technicianId) {
     }
 
-    public OrderBuilder withStatus(OrderStatus status) {
-        this.status = status;
-        return this;
+    public OrderBuilder setRandomTechnician(String[] availableTechnicianIds) {
     }
 
-    public OrderBuilder withPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
-        return this;
+    public OrderBuilder setPaymentMethod(PaymentMethod paymentMethod) {
     }
 
+    public OrderBuilder setCustomPaymentDetails(String paymentDetails) {
+    }
+
+    public OrderBuilder setUsingCoupon(boolean usingCoupon) {
+    }
+
+    public OrderBuilder setCouponCode(String couponCode) {
+    }
 
     public Order build() {
-        Order order = new Order(
-                this.orderId,
-                this.itemName,
-                this.itemCondition,
-                this.status.toString(),
-                this.paymentMethod.toString()
-        );
-
-        if (this.technician != null) {
-            order.setTechnician(this.technician);
-        }
-
-        return order;
     }
 }
