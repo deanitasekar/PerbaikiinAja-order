@@ -11,7 +11,7 @@ class FixedCouponStrategyTest {
         double price = 100.0;
         double discount = 20.0;
 
-        double result = strategy.apply(price, discount, 0);
+        double result = strategy.apply(price, discount);
         assertEquals(80.0, result);
     }
 
