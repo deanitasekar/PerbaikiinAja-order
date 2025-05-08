@@ -1,8 +1,14 @@
 package id.ac.ui.cs.advprog.order.service;
 
+import id.ac.ui.cs.advprog.order.dto.OrderRequestDTO;
+import id.ac.ui.cs.advprog.order.dto.OrderResponseDTO;
+import id.ac.ui.cs.advprog.order.dto.OrderListResponseDTO;
+import id.ac.ui.cs.advprog.order.dto.UpdateOrderRequestDTO;
+import id.ac.ui.cs.advprog.order.dto.ResponseDTO;
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.repository.OrderRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,196 +16,218 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OrderServiceImplTest {
+public class OrderServiceImplTest {
 
     @Mock
     private OrderRepository orderRepository;
 
-    @Mock
-    private NotificationService notificationService;
-
     @InjectMocks
     private OrderServiceImpl orderService;
 
-    private Order testOrder;
-    private UUID testOrderId;
-    private UUID testCustomerId;
-    private UUID testTechnicianId;
+    private UUID orderId;
+    private UUID customerId;
+    private UUID technicianId;
+    private Date serviceDate;
+    private Order pendingOrder;
+    private Order approvedOrder;
+    private OrderRequestDTO orderRequestDTO;
+    private UpdateOrderRequestDTO updateOrderRequestDTO;
 
     @BeforeEach
     void setUp() {
-        testOrderId = UUID.randomUUID();
-        testCustomerId = UUID.randomUUID();
-        testTechnicianId = UUID.randomUUID();
+        orderId = UUID.randomUUID();
+        customerId = UUID.randomUUID();
+        technicianId = UUID.randomUUID();
+        serviceDate = new Date();
+        LocalDateTime now = LocalDateTime.now();
 
-        testOrder = new Order();
-        testOrder.setId(testOrderId);
-        testOrder.setCustomerId(testCustomerId);
-        testOrder.setTechnicianId(testTechnicianId);
-        testOrder.setStatus(OrderStatus.WAITING_APPROVAL.name());
-        testOrder.setItemName("Laptop");
-        testOrder.setRepairRequest("Screen replacement");
-        testOrder.setPaymentMethod("E_WALLET");
+        pendingOrder = new Order();
+        pendingOrder.setId(orderId);
+        pendingOrder.setCustomerId(customerId);
+        pendingOrder.setTechnicianId(technicianId);
+        pendingOrder.setItemName("Dell XPS 15 9500");
+        pendingOrder.setItemCondition("OLED display cracked with visible impact marks at bottom-right corner");
+        pendingOrder.setIssueDescription("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement");
+        pendingOrder.setDesiredServiceDate(serviceDate);
+        pendingOrder.setStatus(OrderStatus.PENDING);
+        pendingOrder.setCreatedAt(now);
+        pendingOrder.setUpdatedAt(now);
+
+        approvedOrder = new Order();
+        approvedOrder.setId(UUID.randomUUID());
+        approvedOrder.setCustomerId(customerId);
+        approvedOrder.setTechnicianId(technicianId);
+        approvedOrder.setItemName("iPhone 14 Pro Max");
+        approvedOrder.setItemCondition("Severe liquid damage with corrosion on logic board");
+        approvedOrder.setIssueDescription("Device boots to Apple logo then shuts down - diagnosed with short circuit in power management IC");
+        approvedOrder.setDesiredServiceDate(serviceDate);
+        approvedOrder.setStatus(OrderStatus.APPROVED);
+        approvedOrder.setCreatedAt(now);
+        approvedOrder.setUpdatedAt(now);
+
+        orderRequestDTO = new OrderRequestDTO();
+        orderRequestDTO.setCustomerId(customerId);
+        orderRequestDTO.setTechnicianId(technicianId);
+        orderRequestDTO.setItemName("Lenovo ThinkPad P1 Gen 5");
+        orderRequestDTO.setItemCondition("Faulty keyboard with multiple unresponsive keys (E, R, T)");
+        orderRequestDTO.setIssueDescription("Mechanical failure in keyboard flex cable due to repeated stress - requires full keyboard assembly replacement");
+        orderRequestDTO.setDesiredServiceDate(serviceDate);
+        orderRequestDTO.setPaymentMethod("Credit Card");
+
+        updateOrderRequestDTO = new UpdateOrderRequestDTO();
+        updateOrderRequestDTO.setItemName("MacBook Pro M2 2023");
+        updateOrderRequestDTO.setItemCondition("Liquid damage on both keyboard and trackpad");
+        updateOrderRequestDTO.setIssueDescription("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
+        updateOrderRequestDTO.setDesiredServiceDate(serviceDate);
+        updateOrderRequestDTO.setTechnicianId(UUID.randomUUID());
+        updateOrderRequestDTO.setPaymentMethod("PayPal");
     }
 
     @Test
-    void createOrder_ShouldSaveOrderAndNotifyTechnician() {
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
+    void testCreateOrder_Success() {
+        when(orderRepository.save(any(Order.class))).thenReturn(pendingOrder);
 
-        Order result = orderService.createOrder(testOrder);
+        OrderResponseDTO response = orderService.createOrder(orderRequestDTO);
 
-        verify(orderRepository).save(testOrder);
-        assertEquals(testOrderId, result.getId());
+        assertNotNull(response);
+        assertEquals(orderId, response.getId());
+        assertEquals(customerId, response.getCustomerId());
+        assertEquals(technicianId, response.getTechnicianId());
+        assertEquals("Dell XPS 15 9500", response.getItemName());
+        assertEquals("OLED display cracked with visible impact marks at bottom-right corner", response.getItemCondition());
+        assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getIssueDescription());
+        assertEquals(serviceDate, response.getDesiredServiceDate());
+        assertEquals(OrderStatus.PENDING, response.getStatus());
+        assertEquals("Bank Transfer", response.getPaymentMethod());
+
+        verify(orderRepository, times(1)).save(any(Order.class));
     }
 
     @Test
-    void getCustomerOrders_ShouldReturnOrders() {
-        List<Order> expected = Collections.singletonList(testOrder);
-        when(orderRepository.findByCustomerId(testCustomerId)).thenReturn(expected);
+    void testGetOrderById_Success() {
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(pendingOrder));
 
-        List<Order> result = orderService.getCustomerOrders(testCustomerId);
+        OrderResponseDTO response = orderService.getOrderById(orderId);
 
-        assertEquals(1, result.size());
-        assertEquals(testOrderId, result.get(0).getId());
+        assertNotNull(response);
+        assertEquals(orderId, response.getId());
+        assertEquals(customerId, response.getCustomerId());
+        assertEquals("Laptop", response.getItemName());
+        assertEquals(OrderStatus.PENDING, response.getStatus());
+
+        verify(orderRepository, times(1)).findById(orderId);
     }
 
     @Test
-    void findById_WhenOrderExists_ShouldReturnOrder() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
+    void testGetOrderById_NotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(orderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        Order result = orderService.findById(testOrderId);
-
-        assertEquals(testOrderId, result.getId());
+        assertThrows(EntityNotFoundException.class, () -> orderService.getOrderById(nonExistentId));
+        verify(orderRepository, times(1)).findById(nonExistentId);
     }
 
     @Test
-    void findById_WhenOrderNotExists_ShouldReturnNull() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.empty());
+    void testGetOrdersByCustomerId_Success() {
+        List<Order> orders = Arrays.asList(pendingOrder, approvedOrder);
+        when(orderRepository.findByCustomerId(customerId)).thenReturn(orders);
 
-        Order result = orderService.findById(testOrderId);
+        OrderListResponseDTO response = orderService.getOrdersByCustomerId(customerId);
 
-        assertNull(result);
+        assertNotNull(response);
+        assertEquals(2, response.getCount());
+        assertEquals(2, response.getOrders().size());
+        assertEquals(orderId, response.getOrders().get(0).getId());
+        assertEquals("Laptop", response.getOrders().get(0).getItemName());
+        assertEquals("Smartphone", response.getOrders().get(1).getItemName());
+
+        verify(orderRepository, times(1)).findByCustomerId(customerId);
     }
 
     @Test
-    void updateStatus_ShouldChangeStatus() {
-        String newStatus = OrderStatus.APPROVED.name();
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
+    void testUpdateOrder_Success() {
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(pendingOrder));
+        when(orderRepository.save(any(Order.class))).thenReturn(pendingOrder);
 
-        Order result = orderService.updateStatus(testOrderId, newStatus);
+        OrderResponseDTO response = orderService.updateOrder(orderId, updateOrderRequestDTO);
 
-        assertEquals(newStatus, result.getStatus());
-        verify(orderRepository).save(testOrder);
+        assertNotNull(response);
+        assertEquals(orderId, response.getId());
+        assertEquals("MacBook Pro M2 2023", response.getItemName());
+        assertEquals("Liquid damage on both keyboard and trackpad", response.getItemCondition());
+        assertEquals("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement", response.getIssueDescription());
+        assertEquals(updateOrderRequestDTO.getTechnicianId(), response.getTechnicianId());
+        assertEquals("E-Wallet", response.getPaymentMethod());
+
+        verify(orderRepository, times(1)).findById(orderId);
+        verify(orderRepository, times(1)).save(any(Order.class));
     }
 
     @Test
-    void updateStatus_WhenOrderNotFound_ShouldThrow() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.empty());
+    void testUpdateOrder_NotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(orderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () ->
-                orderService.updateStatus(testOrderId, "ANY_STATUS")
-        );
+        assertThrows(EntityNotFoundException.class, () -> orderService.updateOrder(nonExistentId, updateOrderRequestDTO));
+        verify(orderRepository, times(1)).findById(nonExistentId);
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
-    void updateOrderDetails_WhenValid_ShouldUpdate() throws Exception {
-        Order updatedOrder = new Order();
-        updatedOrder.setItemName("Updated Laptop");
-        updatedOrder.setPaymentMethod("E_WALLET");
+    void testUpdateOrder_AlreadyApproved() {
+        UUID approvedOrderId = approvedOrder.getId();
+        when(orderRepository.findById(approvedOrderId)).thenReturn(Optional.of(approvedOrder));
 
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
-
-        Order result = orderService.updateOrderDetails(testOrderId, updatedOrder);
-
-        assertEquals("Updated Laptop", result.getItemName());
-        verify(orderRepository).save(testOrder);
+        assertThrows(IllegalStateException.class, () -> orderService.updateOrder(approvedOrderId, updateOrderRequestDTO));
+        verify(orderRepository, times(1)).findById(approvedOrderId);
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
-    void updateOrderDetails_WhenInvalidStatus_ShouldThrow() {
-        testOrder.setStatus(OrderStatus.COMPLETED.name());
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
+    void testCancelOrder_Success() {
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(pendingOrder));
+        when(orderRepository.save(any(Order.class))).thenReturn(pendingOrder);
 
-        assertThrows(IllegalStateException.class, () ->
-                orderService.updateOrderDetails(testOrderId, new Order())
-        );
+        ResponseDTO response = orderService.cancelOrder(orderId);
+
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertEquals("Order has been successfully cancelled", response.getMessage());
+        assertEquals(OrderStatus.CANCELLED, pendingOrder.getStatus());
+
+        verify(orderRepository, times(1)).findById(orderId);
+        verify(orderRepository, times(1)).save(pendingOrder);
     }
 
     @Test
-    void changeTechnician_ShouldUpdateAndNotify() throws Exception {
-        UUID newTechnicianId = UUID.randomUUID();
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
+    void testCancelOrder_NotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(orderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        Order result = orderService.changeTechnician(testOrderId, newTechnicianId);
-        assertEquals(newTechnicianId, result.getTechnicianId());
+        assertThrows(EntityNotFoundException.class, () -> orderService.cancelOrder(nonExistentId));
+        verify(orderRepository, times(1)).findById(nonExistentId);
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
-    void cancelOrder_WhenAuthorized_ShouldCancel() throws Exception {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
+    void testCancelOrder_AlreadyApproved() {
+        UUID approvedOrderId = approvedOrder.getId();
+        when(orderRepository.findById(approvedOrderId)).thenReturn(Optional.of(approvedOrder));
 
-        orderService.cancelOrder(testOrderId, testCustomerId);
-
-        assertEquals(OrderStatus.CANCELLED.name(), testOrder.getStatus());
-    }
-
-    @Test
-    void cancelOrder_WhenUnauthorized_ShouldThrow() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-
-        assertThrows(IllegalStateException.class, () ->
-                orderService.cancelOrder(testOrderId, UUID.randomUUID())
-        );
-    }
-
-    @Test
-    void completeOrder_WhenAuthorized_ShouldComplete() throws Exception {
-        String report = "Screen replaced successfully";
-        testOrder.setStatus(OrderStatus.IN_PROGRESS.name());
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
-
-        Order result = orderService.completeOrder(testOrderId, testTechnicianId, report);
-
-        assertEquals(OrderStatus.COMPLETED.name(), result.getStatus());
-        assertEquals(report, result.getRepairReport());
-    }
-
-    @Test
-    void completeOrder_WhenUnauthorized_ShouldThrow() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-
-        assertThrows(IllegalStateException.class, () ->
-                orderService.completeOrder(testOrderId, UUID.randomUUID(), "report")
-        );
-    }
-
-    @Test
-    void updateStatus_WithInvalidStatus_ShouldThrow() {
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                orderService.updateStatus(testOrderId, "INVALID_STATUS")
-        );
-    }
-
-    @Test
-    void cancelOrder_WhenStatusCannotBeCancelled_ShouldThrow() {
-        testOrder.setStatus(OrderStatus.COMPLETED.name());
-        when(orderRepository.findById(testOrderId)).thenReturn(Optional.of(testOrder));
-
-        assertThrows(IllegalStateException.class, () ->
-                orderService.cancelOrder(testOrderId, testCustomerId)
-        );
+        assertThrows(IllegalStateException.class, () -> orderService.cancelOrder(approvedOrderId));
+        verify(orderRepository, times(1)).findById(approvedOrderId);
+        verify(orderRepository, never()).save(any(Order.class));
     }
 }
