@@ -1,498 +1,191 @@
 package id.ac.ui.cs.advprog.order.model;
 
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
-import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class OrderTest {
 
+    private Order order;
     private OrderBuilder orderBuilder;
-    private final Date serviceDate = new Date();
-    private final UUID customerId = UUID.randomUUID();
-    private final String itemName = "Laptop";
-    private final String itemCondition = "Screen broken";
-    private final String repairRequest = "Fix screen";
-    private final UUID technicianId = UUID.randomUUID();
+    private UUID customerId;
+    private Date desiredServiceDate;
 
     @BeforeEach
     void setUp() {
-        orderBuilder = new OrderBuilder(
-                customerId,
-                itemName,
-                itemCondition,
-                repairRequest,
-                serviceDate,
-                PaymentMethod.BANK_TRANSFER
-        );
+        customerId = UUID.randomUUID();
+        desiredServiceDate = new Date();
+
+        this.orderBuilder = new OrderBuilder()
+                .setCustomerId(customerId)
+                .setItemName("ASUS ROG Zephyrus G14")
+                .setItemCondition("Second-hand, 2 years of usage")
+                .setIssueDescription("Device fails to power on despite charging")
+                .setDesiredServiceDate(desiredServiceDate);
+
+        this.order = orderBuilder.build();
     }
 
     @Test
     void testOrderCreation() {
-        Order order = orderBuilder.build();
-
-        assertEquals(customerId, order.getCustomerId());
-        assertEquals(itemName, order.getItemName());
-        assertEquals(itemCondition, order.getItemCondition());
-        assertEquals(repairRequest, order.getRepairRequest());
-        assertEquals(serviceDate, order.getServiceDate());
-        assertEquals(PaymentMethod.BANK_TRANSFER.getValue(), order.getPaymentMethod());
-        assertEquals(OrderStatus.PENDING.name(), order.getStatus());
-        assertFalse(order.isUsingCoupon());
-        assertNull(order.getCouponCode());
-        assertNotNull(order.getCreatedAt());
-        assertNotNull(order.getUpdatedAt());
+        assertNotNull(this.order);
+        assertEquals(customerId, this.order.getCustomerId());
+        assertEquals("ASUS ROG Zephyrus G14", this.order.getItemName());
+        assertEquals("Second-hand, 2 years of usage", this.order.getItemCondition());
+        assertEquals("Device fails to power on despite charging", this.order.getIssueDescription());
+        assertEquals(desiredServiceDate, this.order.getDesiredServiceDate());
+        assertEquals(OrderStatus.PENDING, this.order.getStatus());
+        assertNotNull(this.order.getCreatedAt());
+        assertNotNull(this.order.getUpdatedAt());
     }
 
     @Test
-    void testOrderCreationWithAllParameters() {
-        Order order = orderBuilder
-                .setTechnicianId(technicianId)
-                .setPaymentMethod(PaymentMethod.E_WALLET)
-                .setCustomPaymentDetails("GoPay: 081234567890")
-                .setUsingCoupon(true)
-                .setCouponCode("DISCOUNT50")
-                .build();
-
-        assertEquals(technicianId, order.getTechnicianId());
-        assertEquals(PaymentMethod.E_WALLET.getValue(), order.getPaymentMethod());
-        assertEquals("GoPay: 081234567890", order.getPaymentDetails());
-        assertTrue(order.isUsingCoupon());
-        assertEquals("DISCOUNT50", order.getCouponCode());
-        assertEquals(OrderStatus.WAITING_APPROVAL.name(), order.getStatus());
+    void testGetOrderStatusDefault() {
+        assertEquals(OrderStatus.PENDING, this.order.getStatus());
     }
 
     @Test
-    void testNoArgsConstructor() {
-        Order order = new Order();
-        assertNull(order.getId());
+    void testSetOrderStatus() {
+        OrderStatus newStatus = OrderStatus.IN_PROGRESS;
+        this.order.setStatus(newStatus);
+        assertEquals(OrderStatus.IN_PROGRESS, this.order.getStatus());
     }
 
     @Test
-    void testSetInvalidStatus() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalArgumentException.class, () -> order.setStatus("INVALID_STATUS"));
-    }
-
-    @ParameterizedTest
-    @EnumSource(OrderStatus.class)
-    void testSetAllOrderStatus(OrderStatus status) {
-        Order order = orderBuilder.build();
-        order.setStatus(status.name());
-        assertEquals(status.name(), order.getStatus());
-    }
-
-    @Test
-    void testSetInvalidPaymentMethod() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalArgumentException.class, () -> order.setPaymentMethod("BITCOIN"));
-    }
-
-    @Test
-    void testOrderStatusEnumConversion() {
-        Order order = orderBuilder.build();
-        assertEquals(OrderStatus.PENDING, order.getOrderStatus());
-
-        order.setStatus(OrderStatus.APPROVED.name());
-        assertEquals(OrderStatus.APPROVED, order.getOrderStatus());
-    }
-
-    @Test
-    void testPaymentMethodEnumConversion() {
-        Order order = orderBuilder.build();
-        assertEquals(PaymentMethod.BANK_TRANSFER, order.getPaymentMethodEnum());
-
-        order.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY.getValue());
-        assertEquals(PaymentMethod.CASH_ON_DELIVERY, order.getPaymentMethodEnum());
-    }
-
-    @Test
-    void testCanBeUpdated() {
-        Order order = orderBuilder.build();
-        assertTrue(order.canBeUpdated());
-
-        order = orderBuilder.setStatus(OrderStatus.WAITING_APPROVAL).build();
-        assertTrue(order.canBeUpdated());
-
-        order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertFalse(order.canBeUpdated());
-    }
-
-    @Test
-    void testCanBeCancelled() {
-        Order order = orderBuilder.build();
-        assertTrue(order.canBeCancelled());
-
-        order = orderBuilder.setStatus(OrderStatus.WAITING_APPROVAL).build();
-        assertTrue(order.canBeCancelled());
-
-        order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertFalse(order.canBeCancelled());
-    }
-
-    @Test
-    void testUpdateTechnicianSuccess() {
-        UUID newTechnicianId = UUID.randomUUID();
-        Order order = orderBuilder.build();
-        order.updateTechnician(newTechnicianId);
-
-        assertEquals(newTechnicianId, order.getTechnicianId());
-    }
-
-    @Test
-    void testUpdateTechnicianWithInvalidState() {
-        Order order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertThrows(IllegalStateException.class, () -> order.updateTechnician(UUID.randomUUID()));
-    }
-
-    @Test
-    void testCancelSuccess() {
-        Order order = orderBuilder.build();
-        order.cancel();
-
-        assertEquals(OrderStatus.CANCELLED.name(), order.getStatus());
-    }
-
-    @Test
-    void testCancelWithInvalidState() {
-        Order order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertThrows(IllegalStateException.class, () -> order.cancel());
-    }
-
-    @Test
-    void testApproveSuccess() {
-        Order order = orderBuilder.setTechnicianId(technicianId).build();
-        order.approve();
-
-        assertEquals(OrderStatus.APPROVED.name(), order.getStatus());
-    }
-
-    @Test
-    void testApproveWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.approve());
-    }
-
-    @Test
-    void testRejectSuccess() {
-        Order order = orderBuilder.setTechnicianId(technicianId).build();
-        order.reject();
-
-        assertEquals(OrderStatus.REJECTED.name(), order.getStatus());
-    }
-
-    @Test
-    void testRejectWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.reject());
-    }
-
-    @Test
-    void testStartProgressSuccess() {
-        Order order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        order.startProgress();
-
-        assertEquals(OrderStatus.IN_PROGRESS.name(), order.getStatus());
-    }
-
-    @Test
-    void testStartProgressWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.startProgress());
-    }
-
-    @Test
-    void testCompleteSuccess() {
-        Order order = orderBuilder.setStatus(OrderStatus.IN_PROGRESS).build();
-        order.complete();
-
-        assertEquals(OrderStatus.COMPLETED.name(), order.getStatus());
-    }
-
-    @Test
-    void testCompleteWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.complete());
-    }
-
-    @Test
-    void testSetRepairEstimateSuccess() {
-        Order order = orderBuilder.setTechnicianId(technicianId).build();
-        order.setRepairEstimate("2 days");
-        assertEquals("2 days", order.getRepairEstimate());
-    }
-
-    @Test
-    void testSetRepairEstimateWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.setRepairEstimate("2 days"));
-    }
-
-    @Test
-    void testSetRepairPriceSuccess() {
-        Order order = orderBuilder.setTechnicianId(technicianId).build();
-        order.setRepairPrice(150.0);
-
-        assertEquals(150.0, order.getRepairPrice());
-    }
-
-    @Test
-    void testSetRepairPriceWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.setRepairPrice(150.0));
-    }
-
-    @Test
-    void testSetRepairReportSuccess() {
-        Order order = orderBuilder.setStatus(OrderStatus.COMPLETED).build();
-        order.setRepairReport("Screen replaced with new one");
-
-        assertEquals("Screen replaced with new one", order.getRepairReport());
-    }
-
-    @Test
-    void testSetRepairReportWithInvalidState() {
-        Order order = orderBuilder.build();
-        assertThrows(IllegalStateException.class, () -> order.setRepairReport("Screen replaced"));
-    }
-
-    @Test
-    void testSettersAndGetters() {
-        Order order = new Order();
-
-        UUID id = UUID.randomUUID();
-        order.setId(id);
-        assertEquals(id, order.getId());
-
-        UUID newCustomerId = UUID.randomUUID();
-        order.setCustomerId(newCustomerId);
-        assertEquals(newCustomerId, order.getCustomerId());
-
-        UUID newTechnicianId = UUID.randomUUID();
-        order.setTechnicianId(newTechnicianId);
-        assertEquals(newTechnicianId, order.getTechnicianId());
-
-        order.setItemName("New Laptop");
-        assertEquals("New Laptop", order.getItemName());
-
-        order.setItemCondition("Battery issues");
-        assertEquals("Battery issues", order.getItemCondition());
-
-        order.setRepairRequest("Replace battery");
-        assertEquals("Replace battery", order.getRepairRequest());
-
-        Date newDate = new Date(serviceDate.getTime() + 86400000);
-        order.setServiceDate(newDate);
-        assertEquals(newDate, order.getServiceDate());
-
-        order.setPaymentDetails("Bank transfer to XYZ Bank");
-        assertEquals("Bank transfer to XYZ Bank", order.getPaymentDetails());
-
-        order.setUsingCoupon(true);
-        assertTrue(order.isUsingCoupon());
-
-        order.setCouponCode("NEW_COUPON");
-        assertEquals("NEW_COUPON", order.getCouponCode());
-
-        Date createdAt = new Date();
-        order.setCreatedAt(createdAt);
-        assertEquals(createdAt, order.getCreatedAt());
-
-        Date updatedAt = new Date();
-        order.setUpdatedAt(updatedAt);
-        assertEquals(updatedAt, order.getUpdatedAt());
-    }
-
-    @Test
-    void testBasicOrderBuilder() {
-        assertEquals(customerId, orderBuilder.getCustomerId());
-        assertEquals(itemName, orderBuilder.getItemName());
-        assertEquals(itemCondition, orderBuilder.getItemCondition());
-        assertEquals(repairRequest, orderBuilder.getRepairRequest());
-        assertEquals(serviceDate, orderBuilder.getServiceDate());
-        assertEquals(PaymentMethod.BANK_TRANSFER.getValue(), orderBuilder.getPaymentMethod());
-        assertNull(orderBuilder.getPaymentDetails());
-        assertEquals(OrderStatus.PENDING.name(), orderBuilder.getStatus());
-        assertFalse(orderBuilder.isUsingCoupon());
-        assertNull(orderBuilder.getCouponCode());
-    }
-
-    @Test
-    void testOrderWithRandomTechnician() {
-        UUID[] technicians = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
-        Order order = orderBuilder.setRandomTechnician(technicians).build();
-
-        assertNotNull(order.getTechnicianId());
-        assertTrue(Arrays.asList(technicians).contains(order.getTechnicianId()));
-    }
-
-    @Test
-    void testRandomTechnicianWithEmptyArray() {
-        UUID[] emptyArray = {};
-        Order order = orderBuilder.setRandomTechnician(emptyArray).build();
-
-        assertNull(order.getTechnicianId());
-        assertEquals(OrderStatus.PENDING.name(), order.getStatus());
-    }
-
-    @Test
-    void testRandomTechnicianWithNullArray() {
-        Order order = orderBuilder.setRandomTechnician(null).build();
-
-        assertNull(order.getTechnicianId());
-        assertEquals(OrderStatus.PENDING.name(), order.getStatus());
+    void testGetCustomerId() {
+        assertEquals(customerId, this.order.getCustomerId());
     }
 
     @Test
     void testSetTechnicianId() {
-        UUID newTechId = UUID.randomUUID();
-        Order order = orderBuilder.setTechnicianId(newTechId).build();
-        assertEquals(newTechId, order.getTechnicianId());
-    }
-
-
-    @Test
-    void testSetStatus() {
-        Order order = orderBuilder.setStatus(OrderStatus.APPROVED).build();
-        assertEquals(OrderStatus.APPROVED.name(), order.getStatus());
+        UUID technicianId = UUID.randomUUID();
+        this.order.setTechnicianId(technicianId);
+        assertEquals(technicianId, this.order.getTechnicianId());
     }
 
     @Test
-    void testSetCustomPaymentDetails() {
-        String paymentDetails = "Bank account: 1234567890";
-        Order order = orderBuilder.setCustomPaymentDetails(paymentDetails).build();
-        assertEquals(paymentDetails, order.getPaymentDetails());
+    void testSetRepairEstimate() {
+        String estimate = "Requires new power supply. Estimated time: 2 days";
+        this.order.setRepairEstimate(estimate);
+        assertEquals(estimate, this.order.getRepairEstimate());
     }
 
     @Test
-    void testPaymentDetailsFromPaymentMethod() {
-        Order order = orderBuilder.build();
-        assertEquals(PaymentMethod.BANK_TRANSFER.getValue(), order.getPaymentDetails());
+    void testSetRepairPrice() {
+        Double price = 150.50;
+        this.order.setRepairPrice(price);
+        assertEquals(price, this.order.getRepairPrice());
     }
 
     @Test
-    void testSetCouponCodeSetsUsingCoupon() {
-        Order order = orderBuilder.setCouponCode("COUPON123").build();
-        assertTrue(order.isUsingCoupon());
-        assertEquals("COUPON123", order.getCouponCode());
+    void testSetRepairReport() {
+        String report = "Replaced power supply and cleaned dust from fans";
+        this.order.setRepairReport(report);
+        assertEquals(report, this.order.getRepairReport());
     }
 
     @Test
-    void testSetEmptyCouponCode() {
-        Order order = orderBuilder.setCouponCode("").build();
-        assertFalse(order.isUsingCoupon());
-        assertEquals("", order.getCouponCode());
+    void testUpdatedAtChanges() {
+        LocalDateTime initialUpdatedAt = this.order.getUpdatedAt();
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        this.order.setStatus(OrderStatus.COMPLETED);
+        this.order.setUpdatedAt(LocalDateTime.now());
+
+        assertNotEquals(initialUpdatedAt, this.order.getUpdatedAt());
     }
 
     @Test
-    void testSetNullCouponCode() {
-        Order order = orderBuilder.setCouponCode(null).build();
-        assertFalse(order.isUsingCoupon());
-        assertNull(order.getCouponCode());
+    void testOrderBuilderChaining() {
+        UUID newCustomerId = UUID.randomUUID();
+        String newItemName = "Phone";
+        String newCondition = "Like new, minor cosmetic scratches";
+        String newIssue = "Screen flickering intermittently";
+        Date newDate = new Date(System.currentTimeMillis() + 86400000);
+
+        OrderBuilder builder = new OrderBuilder()
+                .setCustomerId(newCustomerId)
+                .setItemName(newItemName)
+                .setItemCondition(newCondition)
+                .setIssueDescription(newIssue)
+                .setDesiredServiceDate(newDate);
+
+        Order newOrder = builder.build();
+
+        assertEquals(newCustomerId, newOrder.getCustomerId());
+        assertEquals(newItemName, newOrder.getItemName());
+        assertEquals(newCondition, newOrder.getItemCondition());
+        assertEquals(newIssue, newOrder.getIssueDescription());
+        assertEquals(newDate, newOrder.getDesiredServiceDate());
     }
 
     @Test
-    void testChainability() {
-        assertSame(orderBuilder, orderBuilder.setStatus(OrderStatus.APPROVED));
-        assertSame(orderBuilder, orderBuilder.setTechnicianId(UUID.randomUUID()));
-        assertSame(orderBuilder, orderBuilder.setRandomTechnician(new UUID[]{UUID.randomUUID()}));
-        assertSame(orderBuilder, orderBuilder.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY));
-        assertSame(orderBuilder, orderBuilder.setCustomPaymentDetails("Cash on delivery"));
-        assertSame(orderBuilder, orderBuilder.setUsingCoupon(true));
-        assertSame(orderBuilder, orderBuilder.setCouponCode("COUPON123"));
-    }
-
-    @Test
-    void testOrderStatusEnums() {
+    void testOrderStatusValues() {
         assertEquals(7, OrderStatus.values().length);
-
-        assertNotNull(OrderStatus.PENDING);
-        assertNotNull(OrderStatus.WAITING_APPROVAL);
-        assertNotNull(OrderStatus.APPROVED);
-        assertNotNull(OrderStatus.IN_PROGRESS);
-        assertNotNull(OrderStatus.COMPLETED);
-        assertNotNull(OrderStatus.REJECTED);
-        assertNotNull(OrderStatus.CANCELLED);
-    }
-
-
-    @Test
-    void testPaymentMethodEnums() {
-        assertEquals(3, PaymentMethod.values().length);
-
-        assertNotNull(PaymentMethod.BANK_TRANSFER);
-        assertNotNull(PaymentMethod.E_WALLET);
-        assertNotNull(PaymentMethod.CASH_ON_DELIVERY);
+        assertEquals("PENDING", OrderStatus.PENDING.name());
+        assertEquals("WAITING_APPROVAL", OrderStatus.WAITING_APPROVAL.name());
+        assertEquals("APPROVED", OrderStatus.APPROVED.name());
+        assertEquals("IN_PROGRESS", OrderStatus.IN_PROGRESS.name());
+        assertEquals("COMPLETED", OrderStatus.COMPLETED.name());
+        assertEquals("REJECTED", OrderStatus.REJECTED.name());
+        assertEquals("CANCELLED", OrderStatus.CANCELLED.name());
     }
 
     @Test
-    void testPaymentMethodEnumValues() {
-        assertEquals("BANK_TRANSFER", PaymentMethod.BANK_TRANSFER.getValue());
-        assertEquals("E_WALLET", PaymentMethod.E_WALLET.getValue());
-        assertEquals("CASH_ON_DELIVERY", PaymentMethod.CASH_ON_DELIVERY.getValue());
+    void testOrderStatusGetValue() {
+        assertEquals("PENDING", OrderStatus.PENDING.getValue());
+        assertEquals("WAITING_APPROVAL", OrderStatus.WAITING_APPROVAL.getValue());
+        assertEquals("APPROVED", OrderStatus.APPROVED.getValue());
+        assertEquals("IN_PROGRESS", OrderStatus.IN_PROGRESS.getValue());
+        assertEquals("COMPLETED", OrderStatus.COMPLETED.getValue());
+        assertEquals("REJECTED", OrderStatus.REJECTED.getValue());
+        assertEquals("CANCELLED", OrderStatus.CANCELLED.getValue());
     }
 
     @Test
     void testOrderStatusContains() {
-        assertTrue(OrderStatus.contains(OrderStatus.PENDING.name()));
-        assertTrue(OrderStatus.contains(OrderStatus.APPROVED.name()));
-        assertFalse(OrderStatus.contains("INVALID_STATUS"));
+        assertTrue(OrderStatus.contains("PENDING"));
+        assertTrue(OrderStatus.contains("WAITING_APPROVAL"));
+        assertTrue(OrderStatus.contains("APPROVED"));
+        assertTrue(OrderStatus.contains("IN_PROGRESS"));
+        assertTrue(OrderStatus.contains("COMPLETED"));
+        assertTrue(OrderStatus.contains("REJECTED"));
+        assertTrue(OrderStatus.contains("CANCELLED"));
+
+        assertFalse(OrderStatus.contains("UNKNOWN"));
+        assertFalse(OrderStatus.contains("pending"));
+        assertFalse(OrderStatus.contains(""));
+        assertFalse(OrderStatus.contains(null));
     }
 
     @Test
-    void testPaymentMethodContains() {
-        assertTrue(PaymentMethod.contains(PaymentMethod.BANK_TRANSFER.getValue()));
-        assertTrue(PaymentMethod.contains(PaymentMethod.E_WALLET.getValue()));
-        assertFalse(PaymentMethod.contains("BITCOIN"));
+    void testOrderStatusFromValue() {
+        assertEquals(OrderStatus.PENDING, OrderStatus.fromValue("PENDING"));
+        assertEquals(OrderStatus.WAITING_APPROVAL, OrderStatus.fromValue("WAITING_APPROVAL"));
+        assertEquals(OrderStatus.APPROVED, OrderStatus.fromValue("APPROVED"));
+        assertEquals(OrderStatus.IN_PROGRESS, OrderStatus.fromValue("IN_PROGRESS"));
+        assertEquals(OrderStatus.COMPLETED, OrderStatus.fromValue("COMPLETED"));
+        assertEquals(OrderStatus.REJECTED, OrderStatus.fromValue("REJECTED"));
+        assertEquals(OrderStatus.CANCELLED, OrderStatus.fromValue("CANCELLED"));
     }
 
     @Test
-    void testPaymentMethodFromValue() {
-        assertEquals(PaymentMethod.BANK_TRANSFER, PaymentMethod.fromValue("BANK_TRANSFER"));
-        assertEquals(PaymentMethod.E_WALLET, PaymentMethod.fromValue("E_WALLET"));
-        assertEquals(PaymentMethod.CASH_ON_DELIVERY, PaymentMethod.fromValue("CASH_ON_DELIVERY"));
-        assertThrows(IllegalArgumentException.class, () -> PaymentMethod.fromValue("INVALID_METHOD"));
-    }
+    void testOrderStatusFromValueInvalid() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            OrderStatus.fromValue("UNKNOWN");
+        });
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "PENDING", "WAITING_APPROVAL", "APPROVED",
-            "IN_PROGRESS", "COMPLETED", "REJECTED", "CANCELLED"
-    })
-    void testOrderStatusContainsWithValidStatus(String status) {
-        assertTrue(OrderStatus.contains(status));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "INVALID", "pending", "Pending", "PROCESSING", "", " PENDING "
-    })
-    void testOrderStatusContainsWithInvalidStatus(String status) {
-        assertFalse(OrderStatus.contains(status));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "BANK_TRANSFER", "E_WALLET", "CASH_ON_DELIVERY"
-    })
-    void testPaymentMethodContainsWithValidMethod(String method) {
-        assertTrue(PaymentMethod.contains(method));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "INVALID", "bank_transfer", "Bank Transfer", "CREDIT_CARD", "", " BANK_TRANSFER "
-    })
-    void testPaymentMethodContainsWithInvalidMethod(String method) {
-        assertFalse(PaymentMethod.contains(method));
+        assertTrue(exception.getMessage().contains("Invalid order status"));
     }
 }
