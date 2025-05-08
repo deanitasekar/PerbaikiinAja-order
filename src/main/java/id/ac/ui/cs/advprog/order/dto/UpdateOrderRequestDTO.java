@@ -24,7 +24,7 @@ public class UpdateOrderRequestDTO {
     private String repairDetails;
 
     @Future(message = "Service date must be in the future")
-    private Date desiredServiceDate;
+    private Date serviceDate;
 
     private String paymentMethod;
 

@@ -45,8 +45,8 @@ public class Order {
     @Column(name = "repair_details", nullable = false, columnDefinition = "TEXT")
     private String issueDescription;
 
-    @Column(name = "desired_service_date", nullable = false)
-    private Date desiredServiceDate;
+    @Column(name = "service_date", nullable = false)
+    private Date serviceDate;
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -72,7 +72,7 @@ public class Order {
         this.itemName = builder.getItemName();
         this.itemCondition = builder.getItemCondition();
         this.issueDescription = builder.getRepairDetails();
-        this.desiredServiceDate = builder.getDesiredServiceDate();
+        this.serviceDate = builder.getServiceDate();
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;

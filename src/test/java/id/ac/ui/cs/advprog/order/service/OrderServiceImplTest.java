@@ -63,7 +63,7 @@ public class OrderServiceImplTest {
         pendingOrder.setItemName("Dell XPS 15 9500");
         pendingOrder.setItemCondition("OLED display cracked with visible impact marks at bottom-right corner");
         pendingOrder.setIssueDescription("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement");
-        pendingOrder.setDesiredServiceDate(serviceDate);
+        pendingOrder.setServiceDate(serviceDate);
         pendingOrder.setStatus(OrderStatus.PENDING);
         pendingOrder.setCreatedAt(now);
         pendingOrder.setUpdatedAt(now);
@@ -75,7 +75,7 @@ public class OrderServiceImplTest {
         approvedOrder.setItemName("iPhone 14 Pro Max");
         approvedOrder.setItemCondition("Severe liquid damage with corrosion on logic board");
         approvedOrder.setIssueDescription("Device boots to Apple logo then shuts down - diagnosed with short circuit in power management IC");
-        approvedOrder.setDesiredServiceDate(serviceDate);
+        approvedOrder.setServiceDate(serviceDate);
         approvedOrder.setStatus(OrderStatus.APPROVED);
         approvedOrder.setCreatedAt(now);
         approvedOrder.setUpdatedAt(now);
@@ -86,14 +86,14 @@ public class OrderServiceImplTest {
         orderRequestDTO.setItemName("Lenovo ThinkPad P1 Gen 5");
         orderRequestDTO.setItemCondition("Faulty keyboard with multiple unresponsive keys (E, R, T)");
         orderRequestDTO.setRepairDetails("Mechanical failure in keyboard flex cable due to repeated stress - requires full keyboard assembly replacement");
-        orderRequestDTO.setDesiredServiceDate(serviceDate);
+        orderRequestDTO.setServiceDate(serviceDate);
         orderRequestDTO.setPaymentMethod("Credit Card");
 
         updateOrderRequestDTO = new UpdateOrderRequestDTO();
         updateOrderRequestDTO.setItemName("MacBook Pro M2 2023");
         updateOrderRequestDTO.setItemCondition("Liquid damage on both keyboard and trackpad");
         updateOrderRequestDTO.setRepairDetails("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
-        updateOrderRequestDTO.setDesiredServiceDate(serviceDate);
+        updateOrderRequestDTO.setServiceDate(serviceDate);
         updateOrderRequestDTO.setTechnicianId(UUID.randomUUID());
         updateOrderRequestDTO.setPaymentMethod("E-Wallet");
     }
@@ -111,7 +111,7 @@ public class OrderServiceImplTest {
         assertEquals("Dell XPS 15 9500", response.getItemName());
         assertEquals("OLED display cracked with visible impact marks at bottom-right corner", response.getItemCondition());
         assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getRepairDetails());
-        assertEquals(serviceDate, response.getDesiredServiceDate());
+        assertEquals(serviceDate, response.getServiceDate());
         assertEquals(OrderStatus.PENDING, response.getStatus());
         assertEquals("Credit Card", response.getPaymentMethod());
 

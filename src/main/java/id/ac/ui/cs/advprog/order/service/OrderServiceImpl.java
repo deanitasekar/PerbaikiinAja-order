@@ -31,7 +31,7 @@ public class OrderServiceImpl implements OrderService {
                 .setItemName(orderRequest.getItemName())
                 .setItemCondition(orderRequest.getItemCondition())
                 .setRepairDetails(orderRequest.getRepairDetails())
-                .setDesiredServiceDate(orderRequest.getDesiredServiceDate())
+                .setServiceDate(orderRequest.getServiceDate())
                 .build();
 
         if (orderRequest.getTechnicianId() != null) {
@@ -87,8 +87,8 @@ public class OrderServiceImpl implements OrderService {
             order.setIssueDescription(updateOrderRequest.getRepairDetails());
         }
 
-        if (updateOrderRequest.getDesiredServiceDate() != null) {
-            order.setDesiredServiceDate(updateOrderRequest.getDesiredServiceDate());
+        if (updateOrderRequest.getServiceDate() != null) {
+            order.setServiceDate(updateOrderRequest.getServiceDate());
         }
 
         if (updateOrderRequest.getTechnicianId() != null) {
@@ -130,7 +130,7 @@ public class OrderServiceImpl implements OrderService {
         responseDTO.setItemName(order.getItemName());
         responseDTO.setItemCondition(order.getItemCondition());
         responseDTO.setRepairDetails(order.getIssueDescription());
-        responseDTO.setDesiredServiceDate(order.getDesiredServiceDate());
+        responseDTO.setServiceDate(order.getServiceDate());
         responseDTO.setStatus(order.getStatus());
         responseDTO.setRepairEstimate(order.getRepairEstimate());
         responseDTO.setRepairPrice(order.getRepairPrice());

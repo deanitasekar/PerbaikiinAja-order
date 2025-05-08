@@ -10,7 +10,7 @@ public class OrderBuilder {
     private String itemName;
     private String itemCondition;
     private String repairDetails;
-    private Date desiredServiceDate;
+    private Date serviceDate;
 
     public OrderBuilder setCustomerId(UUID customerId) {
         this.customerId = customerId;
@@ -32,8 +32,8 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder setDesiredServiceDate(Date desiredServiceDate) {
-        this.desiredServiceDate = desiredServiceDate;
+    public OrderBuilder setServiceDate(Date serviceDate) {
+        this.serviceDate = serviceDate;
         return this;
     }
 

@@ -21,19 +21,19 @@ class OrderTest {
     private Order order;
     private OrderBuilder orderBuilder;
     private UUID customerId;
-    private Date desiredServiceDate;
+    private Date serviceDate;
 
     @BeforeEach
     void setUp() {
         customerId = UUID.randomUUID();
-        desiredServiceDate = new Date();
+        serviceDate = new Date();
 
         this.orderBuilder = new OrderBuilder()
                 .setCustomerId(customerId)
                 .setItemName("ASUS ROG Zephyrus G14")
                 .setItemCondition("Second-hand, 2 years of usage")
                 .setRepairDetails("Device fails to power on despite charging")
-                .setDesiredServiceDate(desiredServiceDate);
+                .setServiceDate(serviceDate);
 
         this.order = orderBuilder.build();
     }
@@ -45,7 +45,7 @@ class OrderTest {
         assertEquals("ASUS ROG Zephyrus G14", this.order.getItemName());
         assertEquals("Second-hand, 2 years of usage", this.order.getItemCondition());
         assertEquals("Device fails to power on despite charging", this.order.getIssueDescription());
-        assertEquals(desiredServiceDate, this.order.getDesiredServiceDate());
+        assertEquals(serviceDate, this.order.getServiceDate());
         assertEquals(OrderStatus.PENDING, this.order.getStatus());
         assertNotNull(this.order.getCreatedAt());
         assertNotNull(this.order.getUpdatedAt());
@@ -125,7 +125,7 @@ class OrderTest {
                 .setItemName(newItemName)
                 .setItemCondition(newCondition)
                 .setRepairDetails(newDetails)
-                .setDesiredServiceDate(newDate);
+                .setServiceDate(newDate);
 
         Order newOrder = builder.build();
 
@@ -133,7 +133,7 @@ class OrderTest {
         assertEquals(newItemName, newOrder.getItemName());
         assertEquals(newCondition, newOrder.getItemCondition());
         assertEquals(newDetails, newOrder.getIssueDescription());
-        assertEquals(newDate, newOrder.getDesiredServiceDate());
+        assertEquals(newDate, newOrder.getServiceDate());
     }
 
     @Test

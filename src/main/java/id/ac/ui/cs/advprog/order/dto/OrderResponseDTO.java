@@ -21,7 +21,7 @@ public class OrderResponseDTO {
     private String itemName;
     private String itemCondition;
     private String repairDetails;
-    private Date desiredServiceDate;
+    private Date serviceDate;
     private OrderStatus status;
     private String paymentMethod;
     private String couponCode;

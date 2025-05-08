@@ -32,7 +32,7 @@ public class OrderRequestDTO {
 
     @NotNull(message = "Service date is required")
     @Future(message = "Service date must be in the future")
-    private Date desiredServiceDate;
+    private Date serviceDate;
 
     @NotBlank(message = "Payment method is required")
     private String paymentMethod;

@@ -65,7 +65,7 @@ public class OrderControllerTest {
         orderRequest.setItemName("MacBook Pro 16-inch M2 Max 2023");
         orderRequest.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
         orderRequest.setRepairDetails("Full display assembly replacement required due to impact damage from accidental drop");
-        orderRequest.setDesiredServiceDate(new Date());
+        orderRequest.setServiceDate(new Date());
         orderRequest.setPaymentMethod("Bank Transfer");
 
         updateOrderRequest = new UpdateOrderRequestDTO();

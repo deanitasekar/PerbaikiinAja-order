@@ -40,7 +40,7 @@ class OrderRepositoryTest {
                 .setItemName("MacBook Pro 16-inch 2023")
                 .setItemCondition("Cracked display panel with visible damage")
                 .setRepairDetails("Full LCD replacement needed due to impact damage from a fall")
-                .setDesiredServiceDate(new Date())
+                .setServiceDate(new Date())
                 .build();
         pendingOrder.setTechnicianId(technicianId);
         pendingOrder.setStatus(OrderStatus.PENDING);
@@ -50,7 +50,7 @@ class OrderRepositoryTest {
                 .setItemName("Samsung Galaxy S23 Ultra")
                 .setItemCondition("Original battery swollen, requires urgent replacement")
                 .setRepairDetails("Battery drains within 30 minutes of use - diagnosed as faulty cell")
-                .setDesiredServiceDate(new Date())
+                .setServiceDate(new Date())
                 .build();
         completedOrder.setTechnicianId(technicianId);
         completedOrder.setStatus(OrderStatus.COMPLETED);
