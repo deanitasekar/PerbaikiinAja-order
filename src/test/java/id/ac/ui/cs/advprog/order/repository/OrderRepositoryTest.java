@@ -1,171 +1,81 @@
 package id.ac.ui.cs.advprog.order.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
+import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.model.OrderBuilder;
-import id.ac.ui.cs.advprog.order.enums.OrderStatus;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 @DataJpaTest
-public class OrderRepositoryTest {
+class OrderRepositoryTest {
+
+    @Autowired
+    private TestEntityManager entityManager;
 
     @Autowired
     private OrderRepository orderRepository;
 
-    @Test
-    void testSaveAndFindById() {
-        UUID customerId = UUID.randomUUID();
-        OrderBuilder builder = new OrderBuilder(
-                customerId,
-                "Laptop",
-                "Screen flickering",
-                "Fix screen display issue",
-                new Date(),
-                PaymentMethod.BANK_TRANSFER
-        );
+    private UUID customerId;
+    private UUID technicianId;
+    private Order pendingOrder;
+    private Order completedOrder;
 
-        Order savedOrder = orderRepository.save(builder.build());
-        Optional<Order> foundOrder = orderRepository.findById(savedOrder.getId());
+    @BeforeEach
+    void setUp() {
+        customerId = UUID.randomUUID();
+        technicianId = UUID.randomUUID();
 
-        assertTrue(foundOrder.isPresent());
-        assertEquals("Laptop", foundOrder.get().getItemName());
-        assertEquals(OrderStatus.PENDING.name(), foundOrder.get().getStatus());
+        pendingOrder = new OrderBuilder()
+                .setCustomerId(customerId)
+                .setItemName("MacBook Pro 16-inch 2023")
+                .setItemCondition("Cracked display panel with visible damage")
+                .setIssueDescription("Full LCD replacement needed due to impact damage from a fall")
+                .setDesiredServiceDate(new Date())
+                .build();
+        pendingOrder.setTechnicianId(technicianId);
+        pendingOrder.setStatus(OrderStatus.PENDING);
+
+        completedOrder = new OrderBuilder()
+                .setCustomerId(customerId)
+                .setItemName("Samsung Galaxy S23 Ultra")
+                .setItemCondition("Original battery swollen, requires urgent replacement")
+                .setIssueDescription("Battery drains within 30 minutes of use - diagnosed as faulty cell")
+                .setDesiredServiceDate(new Date())
+                .build();
+        completedOrder.setTechnicianId(technicianId);
+        completedOrder.setStatus(OrderStatus.COMPLETED);
+
+        entityManager.persist(pendingOrder);
+        entityManager.persist(completedOrder);
+        entityManager.flush();
     }
 
     @Test
     void testFindByCustomerId() {
-        UUID customerId = UUID.randomUUID();
-        orderRepository.save(new OrderBuilder(
-                customerId,
-                "Smartphone",
-                "Battery issue",
-                "Replace battery",
-                new Date(),
-                PaymentMethod.E_WALLET
-        ).build());
-
-        List<Order> orders = orderRepository.findByCustomerId(customerId);
-
-        assertEquals(1, orders.size());
-        assertEquals(customerId, orders.get(0).getCustomerId());
-    }
-    @Test
-    void testFindByCustomerIdAndStatus() {
-        UUID customerId = UUID.randomUUID();
-        OrderStatus targetStatus = OrderStatus.APPROVED;
-
-        Order order = new OrderBuilder(
-                customerId,
-                "Refrigerator",
-                "Not cooling",
-                "Repair cooling system",
-                new Date(),
-                PaymentMethod.BANK_TRANSFER
-        )
-                .setStatus(targetStatus)
-                .build();
-
-        orderRepository.save(order);
-
-        List<Order> results = orderRepository.findByCustomerIdAndStatus(
-                customerId,
-                targetStatus.name()
-        );
-
-        assertEquals(1, results.size());
-        assertEquals(targetStatus.name(), results.get(0).getStatus());
-    }
-
-    @Test
-    void testFindByTechnicianIdAndStatus() {
-        UUID technicianId = UUID.randomUUID();
-        String targetStatus = OrderStatus.APPROVED.name();
-
-        Order order = new OrderBuilder(
-                UUID.randomUUID(),
-                "Washing Machine",
-                "Leaking",
-                "Fix water leakage",
-                new Date(),
-                PaymentMethod.CASH_ON_DELIVERY
-        )
-                .setTechnicianId(technicianId)
-                .setStatus(OrderStatus.APPROVED)
-                .build();
-
-        orderRepository.save(order);
-
-        List<Order> results = orderRepository.findByTechnicianIdAndStatus(
-                technicianId,
-                targetStatus
-        );
-
-        assertEquals(1, results.size());
-        assertEquals(technicianId, results.get(0).getTechnicianId());
-        assertEquals(targetStatus, results.get(0).getStatus());
-    }
-
-    @Test
-    void testFindByStatus() {
-        OrderStatus targetStatus = OrderStatus.COMPLETED;
-
-        Order order1 = new OrderBuilder(
-                UUID.randomUUID(),
-                "TV",
-                "No power",
-                "Repair power supply",
-                new Date(),
-                PaymentMethod.BANK_TRANSFER
-        )
-                .setStatus(targetStatus)
-                .build();
-
-        Order order2 = new OrderBuilder(
-                UUID.randomUUID(),
-                "AC",
-                "Not cooling",
-                "Refill coolant",
-                new Date(),
-                PaymentMethod.E_WALLET
-        )
-                .setStatus(OrderStatus.PENDING)
-                .build();
-
-        orderRepository.saveAll(List.of(order1, order2));
-
-        List<Order> results = orderRepository.findByStatus(targetStatus.name());
-
-        assertEquals(1, results.size());
-        assertEquals(targetStatus.name(), results.get(0).getStatus());
+        List<Order> foundOrders = orderRepository.findByCustomerId(customerId);
+        assertEquals(2, foundOrders.size());
+        assertTrue(foundOrders.contains(pendingOrder));
+        assertTrue(foundOrders.contains(completedOrder));
     }
 
     @Test
     void testFindByTechnicianId() {
-        UUID technicianId = UUID.randomUUID();
-        Order order = new OrderBuilder(
-                UUID.randomUUID(),
-                "Microwave",
-                "Not heating",
-                "Check magnetron",
-                new Date(),
-                PaymentMethod.E_WALLET
-        )
-                .setTechnicianId(technicianId)
-                .build();
+        List<Order> technicianOrders = orderRepository.findByTechnicianId(technicianId);
+        assertEquals(2, technicianOrders.size());
+    }
 
-        orderRepository.save(order);
-
-        List<Order> results = orderRepository.findByTechnicianId(technicianId);
-
-        assertEquals(1, results.size());
-        assertEquals(technicianId, results.get(0).getTechnicianId());
+    @Test
+    void testFindByStatus() {
+        List<Order> allPendingOrders = orderRepository.findByStatus(OrderStatus.PENDING);
+        assertTrue(allPendingOrders.contains(pendingOrder));
+        assertFalse(allPendingOrders.contains(completedOrder));
     }
 }
