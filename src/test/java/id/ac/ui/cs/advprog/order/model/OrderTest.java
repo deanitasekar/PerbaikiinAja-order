@@ -26,7 +26,7 @@ class OrderTest {
                 .setCustomerId(customerId)
                 .setItemName("ASUS ROG Zephyrus G14")
                 .setItemCondition("Second-hand, 2 years of usage")
-                .setIssueDescription("Device fails to power on despite charging")
+                .setRepairDetails("Device fails to power on despite charging")
                 .setDesiredServiceDate(desiredServiceDate);
 
         this.order = orderBuilder.build();
@@ -111,14 +111,14 @@ class OrderTest {
         UUID newCustomerId = UUID.randomUUID();
         String newItemName = "Phone";
         String newCondition = "Like new, minor cosmetic scratches";
-        String newIssue = "Screen flickering intermittently";
+        String newDetails = "Screen flickering intermittently";
         Date newDate = new Date(System.currentTimeMillis() + 86400000);
 
         OrderBuilder builder = new OrderBuilder()
                 .setCustomerId(newCustomerId)
                 .setItemName(newItemName)
                 .setItemCondition(newCondition)
-                .setIssueDescription(newIssue)
+                .setRepairDetails(newDetails)
                 .setDesiredServiceDate(newDate);
 
         Order newOrder = builder.build();
@@ -126,7 +126,7 @@ class OrderTest {
         assertEquals(newCustomerId, newOrder.getCustomerId());
         assertEquals(newItemName, newOrder.getItemName());
         assertEquals(newCondition, newOrder.getItemCondition());
-        assertEquals(newIssue, newOrder.getIssueDescription());
+        assertEquals(newDetails, newOrder.getIssueDescription());
         assertEquals(newDate, newOrder.getDesiredServiceDate());
     }
 

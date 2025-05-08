@@ -58,20 +58,20 @@ public class OrderControllerTest {
         orderRequest.setCustomerId(customerId);
         orderRequest.setItemName("MacBook Pro 16-inch M2 Max 2023");
         orderRequest.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
-        orderRequest.setIssueDescription("Full display assembly replacement required due to impact damage from accidental drop");
+        orderRequest.setRepairDetails("Full display assembly replacement required due to impact damage from accidental drop");
         orderRequest.setDesiredServiceDate(new Date());
         orderRequest.setPaymentMethod("Bank Transfer");
 
         updateOrderRequest = new UpdateOrderRequestDTO();
         updateOrderRequest.setItemCondition("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)");
-        updateOrderRequest.setIssueDescription("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
+        updateOrderRequest.setRepairDetails("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
 
         orderResponse = new OrderResponseDTO();
         orderResponse.setId(orderId);
         orderResponse.setCustomerId(customerId);
         orderResponse.setItemName("MacBook Pro 16-inch M2 Max 2023");
         orderResponse.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
-        orderResponse.setIssueDescription("Full display assembly replacement required due to impact damage from accidental drop");
+        orderResponse.setRepairDetails("Full display assembly replacement required due to impact damage from accidental drop");
         orderResponse.setStatus(OrderStatus.PENDING);
         orderResponse.setCreatedAt(LocalDateTime.now());
         orderResponse.setUpdatedAt(LocalDateTime.now());
@@ -100,7 +100,7 @@ public class OrderControllerTest {
             assertEquals(orderId, response.getId());
             assertEquals(customerId, response.getCustomerId());
             assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getItemName());
-            assertTrue(response.getIssueDescription().contains("Full display assembly replacement"));
+            assertTrue(response.getRepairDetails().contains("Full display assembly replacement"));
             assertEquals(OrderStatus.PENDING, response.getStatus());
         });
     }
@@ -144,7 +144,7 @@ public class OrderControllerTest {
         updatedResponse.setCustomerId(customerId);
         updatedResponse.setItemName("MacBook Pro 16-inch M2 Max 2023");
         updatedResponse.setItemCondition("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)");
-        updatedResponse.setIssueDescription("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
+        updatedResponse.setRepairDetails("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
         updatedResponse.setStatus(OrderStatus.PENDING);
 
         Mockito.when(orderService.getOrderById(orderId)).thenReturn(orderResponse);
@@ -169,7 +169,7 @@ public class OrderControllerTest {
             assertEquals(orderId, response.getId());
             assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getItemName());
             assertEquals("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)", response.getItemCondition());
-            assertTrue(response.getIssueDescription().contains("Combined display and keyboard replacement"));
+            assertTrue(response.getRepairDetails().contains("Combined display and keyboard replacement"));
         });
     }
 

@@ -9,7 +9,7 @@ public class OrderBuilder {
     private UUID customerId;
     private String itemName;
     private String itemCondition;
-    private String issueDescription;
+    private String repairDetails;
     private Date desiredServiceDate;
 
     public OrderBuilder setCustomerId(UUID customerId) {
@@ -27,8 +27,8 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder setIssueDescription(String issueDescription) {
-        this.issueDescription = issueDescription;
+    public OrderBuilder setRepairDetails(String repairDetails) {
+        this.repairDetails = repairDetails;
         return this;
     }
 

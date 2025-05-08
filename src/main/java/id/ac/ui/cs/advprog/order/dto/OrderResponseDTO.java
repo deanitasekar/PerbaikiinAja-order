@@ -20,7 +20,7 @@ public class OrderResponseDTO {
     private UUID technicianId;
     private String itemName;
     private String itemCondition;
-    private String issueDescription;
+    private String repairDetails;
     private Date desiredServiceDate;
     private OrderStatus status;
     private String paymentMethod;

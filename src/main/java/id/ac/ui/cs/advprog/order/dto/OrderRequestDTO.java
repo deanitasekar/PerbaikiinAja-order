@@ -27,8 +27,8 @@ public class OrderRequestDTO {
     @NotBlank(message = "Item condition is required")
     private String itemCondition;
 
-    @NotBlank(message = "Issue description is required")
-    private String issueDescription;
+    @NotBlank(message = "Repair details is required")
+    private String repairDetails;
 
     @NotNull(message = "Service date is required")
     @Future(message = "Service date must be in the future")

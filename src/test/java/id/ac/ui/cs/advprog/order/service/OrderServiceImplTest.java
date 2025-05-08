@@ -82,14 +82,14 @@ public class OrderServiceImplTest {
         orderRequestDTO.setTechnicianId(technicianId);
         orderRequestDTO.setItemName("Lenovo ThinkPad P1 Gen 5");
         orderRequestDTO.setItemCondition("Faulty keyboard with multiple unresponsive keys (E, R, T)");
-        orderRequestDTO.setIssueDescription("Mechanical failure in keyboard flex cable due to repeated stress - requires full keyboard assembly replacement");
+        orderRequestDTO.setRepairDetails("Mechanical failure in keyboard flex cable due to repeated stress - requires full keyboard assembly replacement");
         orderRequestDTO.setDesiredServiceDate(serviceDate);
         orderRequestDTO.setPaymentMethod("Credit Card");
 
         updateOrderRequestDTO = new UpdateOrderRequestDTO();
         updateOrderRequestDTO.setItemName("MacBook Pro M2 2023");
         updateOrderRequestDTO.setItemCondition("Liquid damage on both keyboard and trackpad");
-        updateOrderRequestDTO.setIssueDescription("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
+        updateOrderRequestDTO.setRepairDetails("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
         updateOrderRequestDTO.setDesiredServiceDate(serviceDate);
         updateOrderRequestDTO.setTechnicianId(UUID.randomUUID());
         updateOrderRequestDTO.setPaymentMethod("PayPal");
@@ -107,7 +107,7 @@ public class OrderServiceImplTest {
         assertEquals(technicianId, response.getTechnicianId());
         assertEquals("Dell XPS 15 9500", response.getItemName());
         assertEquals("OLED display cracked with visible impact marks at bottom-right corner", response.getItemCondition());
-        assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getIssueDescription());
+        assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getRepairDetails());
         assertEquals(serviceDate, response.getDesiredServiceDate());
         assertEquals(OrderStatus.PENDING, response.getStatus());
         assertEquals("Bank Transfer", response.getPaymentMethod());
@@ -167,7 +167,7 @@ public class OrderServiceImplTest {
         assertEquals(orderId, response.getId());
         assertEquals("MacBook Pro M2 2023", response.getItemName());
         assertEquals("Liquid damage on both keyboard and trackpad", response.getItemCondition());
-        assertEquals("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement", response.getIssueDescription());
+        assertEquals("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement", response.getRepairDetails());
         assertEquals(updateOrderRequestDTO.getTechnicianId(), response.getTechnicianId());
         assertEquals("E-Wallet", response.getPaymentMethod());
 

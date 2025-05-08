@@ -42,7 +42,7 @@ public class Order {
     @Column(name = "item_condition", nullable = false, columnDefinition = "TEXT")
     private String itemCondition;
 
-    @Column(name = "issue_description", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "repair_details", nullable = false, columnDefinition = "TEXT")
     private String issueDescription;
 
     @Column(name = "desired_service_date", nullable = false)
@@ -71,7 +71,7 @@ public class Order {
         this.customerId = builder.getCustomerId();
         this.itemName = builder.getItemName();
         this.itemCondition = builder.getItemCondition();
-        this.issueDescription = builder.getIssueDescription();
+        this.issueDescription = builder.getRepairDetails();
         this.desiredServiceDate = builder.getDesiredServiceDate();
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
