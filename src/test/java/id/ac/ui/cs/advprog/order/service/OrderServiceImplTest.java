@@ -92,7 +92,7 @@ public class OrderServiceImplTest {
         updateOrderRequestDTO.setRepairDetails("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
         updateOrderRequestDTO.setDesiredServiceDate(serviceDate);
         updateOrderRequestDTO.setTechnicianId(UUID.randomUUID());
-        updateOrderRequestDTO.setPaymentMethod("PayPal");
+        updateOrderRequestDTO.setPaymentMethod("E-Wallet");
     }
 
     @Test
@@ -110,7 +110,7 @@ public class OrderServiceImplTest {
         assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getRepairDetails());
         assertEquals(serviceDate, response.getDesiredServiceDate());
         assertEquals(OrderStatus.PENDING, response.getStatus());
-        assertEquals("Bank Transfer", response.getPaymentMethod());
+        assertEquals("Credit Card", response.getPaymentMethod());
 
         verify(orderRepository, times(1)).save(any(Order.class));
     }
@@ -124,7 +124,7 @@ public class OrderServiceImplTest {
         assertNotNull(response);
         assertEquals(orderId, response.getId());
         assertEquals(customerId, response.getCustomerId());
-        assertEquals("Laptop", response.getItemName());
+        assertEquals("Dell XPS 15 9500", response.getItemName());
         assertEquals(OrderStatus.PENDING, response.getStatus());
 
         verify(orderRepository, times(1)).findById(orderId);
@@ -150,8 +150,8 @@ public class OrderServiceImplTest {
         assertEquals(2, response.getCount());
         assertEquals(2, response.getOrders().size());
         assertEquals(orderId, response.getOrders().get(0).getId());
-        assertEquals("Laptop", response.getOrders().get(0).getItemName());
-        assertEquals("Smartphone", response.getOrders().get(1).getItemName());
+        assertEquals("Dell XPS 15 9500", response.getOrders().get(0).getItemName());
+        assertEquals("iPhone 14 Pro Max", response.getOrders().get(1).getItemName());
 
         verify(orderRepository, times(1)).findByCustomerId(customerId);
     }
