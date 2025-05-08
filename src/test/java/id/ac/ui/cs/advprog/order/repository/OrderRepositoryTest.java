@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.model.OrderBuilder;
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
-import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,7 +2,6 @@ package id.ac.ui.cs.advprog.order.controller;
 
 import id.ac.ui.cs.advprog.order.dto.*;
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
-import id.ac.ui.cs.advprog.order.enums.PaymentMethod;
 import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
