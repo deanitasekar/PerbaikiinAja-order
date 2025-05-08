@@ -1,246 +1,349 @@
 package id.ac.ui.cs.advprog.order.controller;
 
-import id.ac.ui.cs.advprog.order.dto.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.order.dto.OrderListResponseDTO;
+import id.ac.ui.cs.advprog.order.dto.OrderRequestDTO;
+import id.ac.ui.cs.advprog.order.dto.OrderResponseDTO;
+import id.ac.ui.cs.advprog.order.dto.ResponseDTO;
+import id.ac.ui.cs.advprog.order.dto.UpdateOrderRequestDTO;
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
-import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.service.OrderService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class OrderControllerTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+public class OrderControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private OrderService orderService;
 
-    @InjectMocks
-    private OrderController orderController;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    private UUID testOrderId;
-    private UUID testCustomerId;
-    private UUID testTechnicianId;
-    private CreateOrderRequest validCreateRequest;
-    private Order mockOrder;
+    private UUID customerId;
+    private UUID orderId;
+    private OrderRequestDTO orderRequest;
+    private UpdateOrderRequestDTO updateOrderRequest;
+    private OrderResponseDTO orderResponse;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        customerId = UUID.fromString("00000123-5189-5678-1039-185016273000");
+        orderId = UUID.randomUUID();
 
-        testOrderId = UUID.randomUUID();
-        testCustomerId = UUID.randomUUID();
-        testTechnicianId = UUID.randomUUID();
+        orderRequest = new OrderRequestDTO();
+        orderRequest.setCustomerId(customerId);
+        orderRequest.setItemName("MacBook Pro 16-inch M2 Max 2023");
+        orderRequest.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
+        orderRequest.setIssueDescription("Full display assembly replacement required due to impact damage from accidental drop");
+        orderRequest.setDesiredServiceDate(new Date());
+        orderRequest.setPaymentMethod("Bank Transfer");
 
-        validCreateRequest = new CreateOrderRequest();
-        validCreateRequest.setCustomerId(testCustomerId);
-        validCreateRequest.setItemName("Broken TV");
-        validCreateRequest.setItemCondition("Screen not turning on");
-        validCreateRequest.setRepairRequest("Fix the display");
-        validCreateRequest.setServiceDate(new Date());
-        validCreateRequest.setPaymentMethod(PaymentMethod.BANK_TRANSFER.getValue());
-        validCreateRequest.setUsingCoupon(false);
+        updateOrderRequest = new UpdateOrderRequestDTO();
+        updateOrderRequest.setItemCondition("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)");
+        updateOrderRequest.setIssueDescription("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
 
-        mockOrder = new Order();
-        mockOrder.setId(testOrderId);
-        mockOrder.setCustomerId(testCustomerId);
-        mockOrder.setItemName("Broken TV");
-        mockOrder.setStatus(OrderStatus.PENDING.name());
+        orderResponse = new OrderResponseDTO();
+        orderResponse.setId(orderId);
+        orderResponse.setCustomerId(customerId);
+        orderResponse.setItemName("MacBook Pro 16-inch M2 Max 2023");
+        orderResponse.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
+        orderResponse.setIssueDescription("Full display assembly replacement required due to impact damage from accidental drop");
+        orderResponse.setStatus(OrderStatus.PENDING);
+        orderResponse.setCreatedAt(LocalDateTime.now());
+        orderResponse.setUpdatedAt(LocalDateTime.now());
     }
 
     @Test
-    void testCreateOrder_Success() {
-        when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(mockOrder);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testCreateOrderSuccess() throws Exception {
+        Mockito.when(orderService.createOrder(any(OrderRequestDTO.class))).thenReturn(orderResponse);
 
-        ResponseEntity<Order> response = orderController.createOrder(validCreateRequest);
+        mockMvc.perform(
+                post("/orders")
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(orderRequest))
+        ).andExpectAll(
+                status().isCreated()
+        ).andDo(result -> {
+            OrderResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    OrderResponseDTO.class
+            );
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).createOrder(validCreateRequest);
+            assertNotNull(response);
+            assertEquals(orderId, response.getId());
+            assertEquals(customerId, response.getCustomerId());
+            assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getItemName());
+            assertTrue(response.getIssueDescription().contains("Full display assembly replacement"));
+            assertEquals(OrderStatus.PENDING, response.getStatus());
+        });
     }
 
     @Test
-    void testGetAllOrders_Success() {
-        List<Order> mockOrders = Arrays.asList(mockOrder);
-        when(orderService.getAllOrders()).thenReturn(mockOrders);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testGetOrderHistory() throws Exception {
+        List<OrderResponseDTO> orders = Arrays.asList(orderResponse);
+        OrderListResponseDTO orderListResponse = new OrderListResponseDTO();
+        orderListResponse.setOrders(orders);
+        orderListResponse.setCount(orders.size());
 
-        ResponseEntity<List<Order>> response = orderController.getAllOrders();
+        Mockito.when(orderService.getOrdersByCustomerId(customerId)).thenReturn(orderListResponse);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrders, response.getBody());
-        verify(orderService, times(1)).getAllOrders();
+        mockMvc.perform(
+                get("/orders")
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            OrderListResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    OrderListResponseDTO.class
+            );
+
+            assertNotNull(response);
+            assertEquals(1, response.getCount());
+            assertEquals(1, response.getOrders().size());
+            assertEquals(orderId, response.getOrders().get(0).getId());
+            assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getOrders().get(0).getItemName());
+        });
     }
 
     @Test
-    void testGetOrderById_Success() {
-        when(orderService.getOrderById(testOrderId)).thenReturn(mockOrder);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testUpdateOrderSuccess() throws Exception {
+        OrderResponseDTO updatedResponse = new OrderResponseDTO();
+        updatedResponse.setId(orderId);
+        updatedResponse.setCustomerId(customerId);
+        updatedResponse.setItemName("MacBook Pro 16-inch M2 Max 2023");
+        updatedResponse.setItemCondition("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)");
+        updatedResponse.setIssueDescription("Combined display and keyboard replacement needed - confirmed liquid damage in lower chassis");
+        updatedResponse.setStatus(OrderStatus.PENDING);
 
-        ResponseEntity<Order> response = orderController.getOrderById(testOrderId);
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(orderResponse);
+        Mockito.when(orderService.updateOrder(eq(orderId), any(UpdateOrderRequestDTO.class)))
+                .thenReturn(updatedResponse);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).getOrderById(testOrderId);
+        mockMvc.perform(
+                put("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateOrderRequest))
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            OrderResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    OrderResponseDTO.class
+            );
+
+            assertNotNull(response);
+            assertEquals(orderId, response.getId());
+            assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getItemName());
+            assertEquals("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)", response.getItemCondition());
+            assertTrue(response.getIssueDescription().contains("Combined display and keyboard replacement"));
+        });
     }
 
     @Test
-    void testGetOrdersByCustomerId_Success() {
-        List<Order> mockOrders = Arrays.asList(mockOrder);
-        when(orderService.getOrdersByCustomerId(testCustomerId)).thenReturn(mockOrders);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testUpdateOrderNotFound() throws Exception {
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenThrow(new EntityNotFoundException("Order not found"));
 
-        ResponseEntity<List<Order>> response = orderController.getOrdersByCustomerId(testCustomerId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrders, response.getBody());
-        verify(orderService, times(1)).getOrdersByCustomerId(testCustomerId);
+        mockMvc.perform(
+                put("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateOrderRequest))
+        ).andExpectAll(
+                status().isNotFound()
+        );
     }
 
     @Test
-    void testGetOrdersByTechnicianId_Success() {
-        List<Order> mockOrders = Arrays.asList(mockOrder);
-        when(orderService.getOrdersByTechnicianId(testTechnicianId)).thenReturn(mockOrders);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testUpdateOrderForbidden() throws Exception {
+        OrderResponseDTO differentOwnerResponse = new OrderResponseDTO();
+        differentOwnerResponse.setId(orderId);
+        differentOwnerResponse.setCustomerId(UUID.randomUUID());
 
-        ResponseEntity<List<Order>> response = orderController.getOrdersByTechnicianId(testTechnicianId);
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(differentOwnerResponse);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrders, response.getBody());
-        verify(orderService, times(1)).getOrdersByTechnicianId(testTechnicianId);
+        mockMvc.perform(
+                put("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateOrderRequest))
+        ).andExpectAll(
+                status().isForbidden()
+        );
     }
 
     @Test
-    void testUpdateOrder_Success() {
-        UpdateOrderRequest updateRequest = new UpdateOrderRequest();
-        updateRequest.setItemName("Updated TV");
-        updateRequest.setItemCondition("Updated condition");
-        updateRequest.setRepairRequest("Updated request");
-        updateRequest.setServiceDate(new Date());
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testUpdateOrderAlreadyProcessed() throws Exception {
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(orderResponse);
+        Mockito.when(orderService.updateOrder(eq(orderId), any(UpdateOrderRequestDTO.class)))
+                .thenThrow(new IllegalStateException("Order cannot be updated after technician has reviewed it"));
 
-        mockOrder.setItemName("Updated TV");
-        when(orderService.updateOrder(eq(testOrderId), any(UpdateOrderRequest.class))).thenReturn(mockOrder);
+        mockMvc.perform(
+                put("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateOrderRequest))
+        ).andExpectAll(
+                status().isBadRequest()
+        ).andDo(result -> {
+            ResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    ResponseDTO.class
+            );
 
-        ResponseEntity<Order> response = orderController.updateOrder(testOrderId, updateRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).updateOrder(testOrderId, updateRequest);
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertEquals("Order cannot be updated after technician has reviewed it", response.getMessage());
+        });
     }
 
     @Test
-    void testAssignTechnician_Success() {
-        mockOrder.setTechnicianId(testTechnicianId);
-        mockOrder.setStatus(OrderStatus.WAITING_APPROVAL.name());
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testCancelOrderSuccess() throws Exception {
+        ResponseDTO successResponse = new ResponseDTO();
+        successResponse.setSuccess(true);
+        successResponse.setMessage("Order has been successfully cancelled");
 
-        when(orderService.assignTechnician(testOrderId, testTechnicianId)).thenReturn(mockOrder);
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(orderResponse);
+        Mockito.when(orderService.cancelOrder(orderId)).thenReturn(successResponse);
 
-        ResponseEntity<Order> response = orderController.assignTechnician(testOrderId, testTechnicianId);
+        mockMvc.perform(
+                delete("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            ResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    ResponseDTO.class
+            );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).assignTechnician(testOrderId, testTechnicianId);
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals("Order has been successfully cancelled", response.getMessage());
+        });
     }
 
     @Test
-    void testCancelOrder_Success() {
-        mockOrder.setStatus(OrderStatus.CANCELLED.name());
-        when(orderService.cancelOrder(testOrderId)).thenReturn(mockOrder);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testCancelOrderNotFound() throws Exception {
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenThrow(new EntityNotFoundException("Order not found"));
 
-        ResponseEntity<Order> response = orderController.cancelOrder(testOrderId);
+        mockMvc.perform(
+                delete("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            ResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    ResponseDTO.class
+            );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).cancelOrder(testOrderId);
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertEquals("Order not found", response.getMessage());
+        });
     }
 
     @Test
-    void testProvideEstimate_Success() {
-        RepairEstimateRequest estimateRequest = new RepairEstimateRequest();
-        estimateRequest.setRepairEstimate("2 days");
-        estimateRequest.setRepairPrice(150.0);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testCancelOrderForbidden() throws Exception {
+        OrderResponseDTO differentOwnerResponse = new OrderResponseDTO();
+        differentOwnerResponse.setId(orderId);
+        differentOwnerResponse.setCustomerId(UUID.randomUUID());
 
-        mockOrder.setRepairEstimate("2 days");
-        mockOrder.setRepairPrice(150.0);
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(differentOwnerResponse);
 
-        when(orderService.provideEstimate(eq(testOrderId), any(RepairEstimateRequest.class))).thenReturn(mockOrder);
-
-        ResponseEntity<Order> response = orderController.provideEstimate(testOrderId, estimateRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).provideEstimate(testOrderId, estimateRequest);
+        mockMvc.perform(
+                delete("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isForbidden()
+        );
     }
 
     @Test
-    void testApproveOrder_Success() {
-        mockOrder.setStatus(OrderStatus.APPROVED.name());
-        when(orderService.approveOrder(testOrderId)).thenReturn(mockOrder);
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testCancelOrderAlreadyProcessed() throws Exception {
+        Mockito.when(orderService.getOrderById(orderId)).thenReturn(orderResponse);
+        Mockito.when(orderService.cancelOrder(orderId))
+                .thenThrow(new IllegalStateException("Order cannot be cancelled after technician has approved it"));
 
-        ResponseEntity<Order> response = orderController.approveOrder(testOrderId);
+        mockMvc.perform(
+                delete("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isBadRequest()
+        ).andDo(result -> {
+            ResponseDTO response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    ResponseDTO.class
+            );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).approveOrder(testOrderId);
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertEquals("Order cannot be cancelled after technician has approved it", response.getMessage());
+        });
     }
 
     @Test
-    void testRejectOrder_Success() {
-        mockOrder.setStatus(OrderStatus.REJECTED.name());
-        when(orderService.rejectOrder(testOrderId)).thenReturn(mockOrder);
-
-        ResponseEntity<Order> response = orderController.rejectOrder(testOrderId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).rejectOrder(testOrderId);
-    }
-
-    @Test
-    void testStartProgress_Success() {
-        mockOrder.setStatus(OrderStatus.IN_PROGRESS.name());
-        when(orderService.startProgress(testOrderId)).thenReturn(mockOrder);
-
-        ResponseEntity<Order> response = orderController.startProgress(testOrderId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).startProgress(testOrderId);
-    }
-
-    @Test
-    void testCompleteOrder_Success() {
-        mockOrder.setStatus(OrderStatus.COMPLETED.name());
-        when(orderService.completeOrder(testOrderId)).thenReturn(mockOrder);
-
-        ResponseEntity<Order> response = orderController.completeOrder(testOrderId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).completeOrder(testOrderId);
-    }
-
-    @Test
-    void testSubmitRepairReport_Success() {
-        RepairReportRequest reportRequest = new RepairReportRequest();
-        reportRequest.setRepairReport("Fixed the display by replacing the LCD panel");
-
-        mockOrder.setRepairReport("Fixed the display by replacing the LCD panel");
-
-        when(orderService.submitRepairReport(eq(testOrderId), any(RepairReportRequest.class))).thenReturn(mockOrder);
-
-        ResponseEntity<Order> response = orderController.submitRepairReport(testOrderId, reportRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockOrder, response.getBody());
-        verify(orderService, times(1)).submitRepairReport(testOrderId, reportRequest);
+    void testGetOrderWhenUserIsNotAuthenticated() throws Exception {
+        mockMvc.perform(
+                get("/orders")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isForbidden()
+        );
     }
 }
