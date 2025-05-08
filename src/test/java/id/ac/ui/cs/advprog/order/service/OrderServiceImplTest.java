@@ -47,6 +47,8 @@ public class OrderServiceImplTest {
     private Order approvedOrder;
     private OrderRequestDTO orderRequestDTO;
     private UpdateOrderRequestDTO updateOrderRequestDTO;
+    private UUID bankTransferPaymentId;
+    private UUID creditCardPaymentId;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +57,8 @@ public class OrderServiceImplTest {
         technicianId = UUID.randomUUID();
         serviceDate = new Date();
         LocalDateTime now = LocalDateTime.now();
+        bankTransferPaymentId = UUID.fromString("0000a456-4002-4567-e89b-0000000012d3");
+        creditCardPaymentId = UUID.fromString("123e4567-e89b-12d3-a456-426614174002");
 
         pendingOrder = new Order();
         pendingOrder.setId(orderId);
@@ -62,11 +66,12 @@ public class OrderServiceImplTest {
         pendingOrder.setTechnicianId(technicianId);
         pendingOrder.setItemName("Dell XPS 15 9500");
         pendingOrder.setItemCondition("OLED display cracked with visible impact marks at bottom-right corner");
-        pendingOrder.setIssueDescription("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement");
+        pendingOrder.setRepairDetails("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement");
         pendingOrder.setServiceDate(serviceDate);
         pendingOrder.setStatus(OrderStatus.PENDING);
         pendingOrder.setCreatedAt(now);
         pendingOrder.setUpdatedAt(now);
+        pendingOrder.setPaymentMethodId(bankTransferPaymentId);
 
         approvedOrder = new Order();
         approvedOrder.setId(UUID.randomUUID());
@@ -74,11 +79,12 @@ public class OrderServiceImplTest {
         approvedOrder.setTechnicianId(technicianId);
         approvedOrder.setItemName("iPhone 14 Pro Max");
         approvedOrder.setItemCondition("Severe liquid damage with corrosion on logic board");
-        approvedOrder.setIssueDescription("Device boots to Apple logo then shuts down - diagnosed with short circuit in power management IC");
+        approvedOrder.setRepairDetails("Device boots to Apple logo then shuts down - diagnosed with short circuit in power management IC");
         approvedOrder.setServiceDate(serviceDate);
         approvedOrder.setStatus(OrderStatus.APPROVED);
         approvedOrder.setCreatedAt(now);
         approvedOrder.setUpdatedAt(now);
+        approvedOrder.setPaymentMethodId(creditCardPaymentId);
 
         orderRequestDTO = new OrderRequestDTO();
         orderRequestDTO.setCustomerId(customerId);
@@ -87,7 +93,7 @@ public class OrderServiceImplTest {
         orderRequestDTO.setItemCondition("Faulty keyboard with multiple unresponsive keys (E, R, T)");
         orderRequestDTO.setRepairDetails("Mechanical failure in keyboard flex cable due to repeated stress - requires full keyboard assembly replacement");
         orderRequestDTO.setServiceDate(serviceDate);
-        orderRequestDTO.setPaymentMethod("Credit Card");
+        orderRequestDTO.setPaymentMethodId(bankTransferPaymentId);
 
         updateOrderRequestDTO = new UpdateOrderRequestDTO();
         updateOrderRequestDTO.setItemName("MacBook Pro M2 2023");
@@ -95,7 +101,7 @@ public class OrderServiceImplTest {
         updateOrderRequestDTO.setRepairDetails("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement");
         updateOrderRequestDTO.setServiceDate(serviceDate);
         updateOrderRequestDTO.setTechnicianId(UUID.randomUUID());
-        updateOrderRequestDTO.setPaymentMethod("E-Wallet");
+        updateOrderRequestDTO.setPaymentMethodId(creditCardPaymentId);
     }
 
     @Test
@@ -113,7 +119,7 @@ public class OrderServiceImplTest {
         assertEquals("Matrix failure on 40% of screen area caused by physical impact - requires full panel replacement", response.getRepairDetails());
         assertEquals(serviceDate, response.getServiceDate());
         assertEquals(OrderStatus.PENDING, response.getStatus());
-        assertEquals("Credit Card", response.getPaymentMethod());
+        assertEquals(bankTransferPaymentId, response.getPaymentMethodId());
 
         verify(orderRepository, times(1)).save(any(Order.class));
     }
@@ -172,7 +178,7 @@ public class OrderServiceImplTest {
         assertEquals("Liquid damage on both keyboard and trackpad", response.getItemCondition());
         assertEquals("Corrosion detected in keyboard backlight circuit and trackpad flex connector - full disassembly required for cleaning and component replacement", response.getRepairDetails());
         assertEquals(updateOrderRequestDTO.getTechnicianId(), response.getTechnicianId());
-        assertEquals("E-Wallet", response.getPaymentMethod());
+        assertEquals(bankTransferPaymentId, response.getPaymentMethodId());
 
         verify(orderRepository, times(1)).findById(orderId);
         verify(orderRepository, times(1)).save(any(Order.class));

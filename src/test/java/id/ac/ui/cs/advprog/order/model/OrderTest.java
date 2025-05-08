@@ -44,7 +44,7 @@ class OrderTest {
         assertEquals(customerId, this.order.getCustomerId());
         assertEquals("ASUS ROG Zephyrus G14", this.order.getItemName());
         assertEquals("Second-hand, 2 years of usage", this.order.getItemCondition());
-        assertEquals("Device fails to power on despite charging", this.order.getIssueDescription());
+        assertEquals("Device fails to power on despite charging", this.order.getRepairDetails());
         assertEquals(serviceDate, this.order.getServiceDate());
         assertEquals(OrderStatus.PENDING, this.order.getStatus());
         assertNotNull(this.order.getCreatedAt());
@@ -132,7 +132,7 @@ class OrderTest {
         assertEquals(newCustomerId, newOrder.getCustomerId());
         assertEquals(newItemName, newOrder.getItemName());
         assertEquals(newCondition, newOrder.getItemCondition());
-        assertEquals(newDetails, newOrder.getIssueDescription());
+        assertEquals(newDetails, newOrder.getRepairDetails());
         assertEquals(newDate, newOrder.getServiceDate());
     }
 

@@ -32,6 +32,8 @@ public class OrderServiceImpl implements OrderService {
                 .setItemCondition(orderRequest.getItemCondition())
                 .setRepairDetails(orderRequest.getRepairDetails())
                 .setServiceDate(orderRequest.getServiceDate())
+                .setPaymentMethodId(orderRequest.getPaymentMethodId())
+                .setCouponId(orderRequest.getCouponId())
                 .build();
 
         if (orderRequest.getTechnicianId() != null) {
@@ -40,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        return convertToOrderResponse(savedOrder, orderRequest.getPaymentMethod());
+        return convertToOrderResponse(savedOrder);
     }
 
     @Override
@@ -48,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
 
-        return convertToOrderResponse(order, null);
+        return convertToOrderResponse(order);
     }
 
     @Override
@@ -56,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> orders = orderRepository.findByCustomerId(customerId);
 
         List<OrderResponseDTO> orderResponses = orders.stream()
-                .map(order -> convertToOrderResponse(order, null))
+                .map(this::convertToOrderResponse)
                 .collect(Collectors.toList());
 
         return OrderListResponseDTO.builder()
@@ -64,7 +66,6 @@ public class OrderServiceImpl implements OrderService {
                 .count(orderResponses.size())
                 .build();
     }
-
 
     @Override
     public OrderResponseDTO updateOrder(UUID orderId, UpdateOrderRequestDTO updateOrderRequest) {
@@ -84,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         if (updateOrderRequest.getRepairDetails() != null) {
-            order.setIssueDescription(updateOrderRequest.getRepairDetails());
+            order.setRepairDetails(updateOrderRequest.getRepairDetails());
         }
 
         if (updateOrderRequest.getServiceDate() != null) {
@@ -95,11 +96,31 @@ public class OrderServiceImpl implements OrderService {
             order.setTechnicianId(updateOrderRequest.getTechnicianId());
         }
 
+        if (order.getPaymentMethodId() == null && updateOrderRequest.getPaymentMethodId() != null) {
+            order.setPaymentMethodId(updateOrderRequest.getPaymentMethodId());
+        }
+
+        if (updateOrderRequest.getCouponId() != null) {
+            order.setCouponId(updateOrderRequest.getCouponId());
+        }
+
+        if (updateOrderRequest.getEstimatedCompletionTime() != null) {
+            order.setEstimatedCompletionTime(updateOrderRequest.getEstimatedCompletionTime());
+        }
+
+        if (updateOrderRequest.getEstimatedPrice() != null) {
+            order.setEstimatedPrice(updateOrderRequest.getEstimatedPrice());
+        }
+
+        if (updateOrderRequest.getFinalPrice() != null) {
+            order.setFinalPrice(updateOrderRequest.getFinalPrice());
+        }
+
         order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
 
-        return convertToOrderResponse(updatedOrder, updateOrderRequest.getPaymentMethod());
+        return convertToOrderResponse(updatedOrder);
     }
 
     @Override
@@ -122,25 +143,27 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
-    private OrderResponseDTO convertToOrderResponse(Order order, String paymentMethod) {
+    private OrderResponseDTO convertToOrderResponse(Order order) {
         OrderResponseDTO responseDTO = new OrderResponseDTO();
         responseDTO.setId(order.getId());
         responseDTO.setCustomerId(order.getCustomerId());
         responseDTO.setTechnicianId(order.getTechnicianId());
         responseDTO.setItemName(order.getItemName());
         responseDTO.setItemCondition(order.getItemCondition());
-        responseDTO.setRepairDetails(order.getIssueDescription());
+        responseDTO.setRepairDetails(order.getRepairDetails());
         responseDTO.setServiceDate(order.getServiceDate());
         responseDTO.setStatus(order.getStatus());
+        responseDTO.setPaymentMethodId(order.getPaymentMethodId());
+        responseDTO.setCouponId(order.getCouponId());
         responseDTO.setRepairEstimate(order.getRepairEstimate());
         responseDTO.setRepairPrice(order.getRepairPrice());
         responseDTO.setRepairReport(order.getRepairReport());
+        responseDTO.setEstimatedCompletionTime(order.getEstimatedCompletionTime());
+        responseDTO.setEstimatedPrice(order.getEstimatedPrice());
+        responseDTO.setFinalPrice(order.getFinalPrice());
         responseDTO.setCreatedAt(order.getCreatedAt());
         responseDTO.setUpdatedAt(order.getUpdatedAt());
-
-        if (paymentMethod != null) {
-            responseDTO.setPaymentMethod(paymentMethod);
-        }
+        responseDTO.setCompletedAt(order.getCompletedAt());
 
         return responseDTO;
     }

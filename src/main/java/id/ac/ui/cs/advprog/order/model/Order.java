@@ -43,7 +43,7 @@ public class Order {
     private String itemCondition;
 
     @Column(name = "repair_details", nullable = false, columnDefinition = "TEXT")
-    private String issueDescription;
+    private String repairDetails;
 
     @Column(name = "service_date", nullable = false)
     private Date serviceDate;
@@ -61,18 +61,38 @@ public class Order {
     @Column(name = "repair_report", columnDefinition = "TEXT")
     private String repairReport;
 
+    @Column(name = "payment_method_id")
+    private UUID paymentMethodId;
+
+    @Column(name = "coupon_id")
+    private UUID couponId;
+
+    @Column(name = "estimated_completion_time")
+    private String estimatedCompletionTime;
+
+    @Column(name = "estimated_price")
+    private Double estimatedPrice;
+
+    @Column(name = "final_price")
+    private Double finalPrice;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     public Order(OrderBuilder builder) {
         this.customerId = builder.getCustomerId();
         this.itemName = builder.getItemName();
         this.itemCondition = builder.getItemCondition();
-        this.issueDescription = builder.getRepairDetails();
+        this.repairDetails = builder.getRepairDetails();
         this.serviceDate = builder.getServiceDate();
+        this.paymentMethodId = builder.getPaymentMethodId();
+        this.couponId = builder.getCouponId();
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;

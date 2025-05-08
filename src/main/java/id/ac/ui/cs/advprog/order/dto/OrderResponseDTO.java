@@ -23,13 +23,17 @@ public class OrderResponseDTO {
     private String repairDetails;
     private Date serviceDate;
     private OrderStatus status;
-    private String paymentMethod;
-    private String couponCode;
+    private UUID paymentMethodId;
+    private UUID couponId;
     private String repairEstimate;
     private Double repairPrice;
     private String repairReport;
+    private String estimatedCompletionTime;
+    private Double estimatedPrice;
+    private Double finalPrice;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime completedAt;
 
     private String technicianName;
     private Double technicianRating;

@@ -26,7 +26,13 @@ public class UpdateOrderRequestDTO {
     @Future(message = "Service date must be in the future")
     private Date serviceDate;
 
-    private String paymentMethod;
+    private UUID paymentMethodId;
 
-    private String couponCode;
+    private UUID couponId;
+
+    private String estimatedCompletionTime;
+
+    private Double estimatedPrice;
+
+    private Double finalPrice;
 }

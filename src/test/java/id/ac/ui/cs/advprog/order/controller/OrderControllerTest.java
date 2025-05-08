@@ -66,7 +66,7 @@ public class OrderControllerTest {
         orderRequest.setItemCondition("OLED display shattered with spiderweb cracks across 70% of surface area");
         orderRequest.setRepairDetails("Full display assembly replacement required due to impact damage from accidental drop");
         orderRequest.setServiceDate(new Date());
-        orderRequest.setPaymentMethod("Bank Transfer");
+        orderRequest.setPaymentMethodId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));;
 
         updateOrderRequest = new UpdateOrderRequestDTO();
         updateOrderRequest.setItemCondition("Additional keyboard damage detected - multiple non-responsive keys (A,S,D,F)");

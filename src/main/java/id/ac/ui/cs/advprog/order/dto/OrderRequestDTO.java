@@ -27,15 +27,15 @@ public class OrderRequestDTO {
     @NotBlank(message = "Item condition is required")
     private String itemCondition;
 
-    @NotBlank(message = "Repair details is required")
+    @NotBlank(message = "Repair details are required")
     private String repairDetails;
 
     @NotNull(message = "Service date is required")
     @Future(message = "Service date must be in the future")
     private Date serviceDate;
 
-    @NotBlank(message = "Payment method is required")
-    private String paymentMethod;
+    @NotNull
+    private UUID paymentMethodId;
 
-    private String couponCode;
+    private UUID couponId;
 }

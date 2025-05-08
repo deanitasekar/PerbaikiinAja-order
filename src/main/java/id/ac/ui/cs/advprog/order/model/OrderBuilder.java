@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import java.util.Date;
 import java.util.UUID;
+
 @Getter
 public class OrderBuilder {
     private UUID customerId;
@@ -11,6 +12,8 @@ public class OrderBuilder {
     private String itemCondition;
     private String repairDetails;
     private Date serviceDate;
+    private UUID paymentMethodId;
+    private UUID couponId;
 
     public OrderBuilder setCustomerId(UUID customerId) {
         this.customerId = customerId;
@@ -34,6 +37,16 @@ public class OrderBuilder {
 
     public OrderBuilder setServiceDate(Date serviceDate) {
         this.serviceDate = serviceDate;
+        return this;
+    }
+
+    public OrderBuilder setPaymentMethodId(UUID paymentMethodId) {
+        this.paymentMethodId = paymentMethodId;
+        return this;
+    }
+
+    public OrderBuilder setCouponId(UUID couponId) {
+        this.couponId = couponId;
         return this;
     }
 
