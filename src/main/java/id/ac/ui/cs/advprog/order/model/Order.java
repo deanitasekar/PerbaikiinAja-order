@@ -68,5 +68,13 @@ public class Order {
     private LocalDateTime updatedAt;
 
     public Order(OrderBuilder builder) {
+        this.customerId = builder.getCustomerId();
+        this.itemName = builder.getItemName();
+        this.itemCondition = builder.getItemCondition();
+        this.issueDescription = builder.getIssueDescription();
+        this.desiredServiceDate = builder.getDesiredServiceDate();
+        this.status = OrderStatus.PENDING;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
     }
 }
