@@ -1,15 +1,19 @@
 package id.ac.ui.cs.advprog.order.service;
 
+import id.ac.ui.cs.advprog.order.dto.*;
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.factory.CouponStrategyFactory;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 import id.ac.ui.cs.advprog.order.repository.CouponRepository;
 import id.ac.ui.cs.advprog.order.strategy.CouponStrategy;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Service
 public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository repo;
@@ -21,54 +25,103 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    public Coupon create(Coupon coupon) {
-        if (coupon.getCode() == null || coupon.getCode().isBlank()) {
-            throw new IllegalArgumentException("Coupon code must not be empty");
+    public CouponResponseDTO create(CreateCouponRequestDTO request) {
+        CouponType type;
+        try {
+            type = CouponType.valueOf(request.getCoupon_type());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid coupon type: " + request.getCoupon_type());
         }
-        return repo.save(coupon);
+
+        Coupon coupon = new Coupon(type, request.getDiscount_amount(), request.getMax_usage());
+        coupon.setStart_date(request.getStart_date());
+        coupon.setEnd_date(request.getEnd_date());
+
+        return toResponse(repo.save(coupon));
     }
 
     @Override
-    public Coupon update(UUID id, Coupon coupon) {
-        if (repo.findById(id) == null) {
-            throw new NoSuchElementException("Coupon not found for update");
-        }
-        return repo.save(coupon);
+    public CouponResponseDTO update(UUID id, UpdateCouponRequestDTO request) {
+        Coupon coupon = repo.findById(id);
+
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+
+
+        coupon.setDiscount_amount(request.getDiscount_amount());
+        coupon.setMax_usage(request.getMax_usage());
+        coupon.setStart_date(request.getStart_date());
+        coupon.setEnd_date(request.getEnd_date());
+
+        return toResponse(repo.save(coupon));
     }
 
     @Override
     public void delete(UUID id) {
-        repo.deleteById(id);
+        Coupon coupon = repo.findById(id);
+
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+
+        repo.deleteById(coupon.getId());
     }
 
     @Override
-    public List<Coupon> findAll() {
-        return repo.findAll();
+    public List<CouponResponseDTO> findAll() {
+        return repo.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Coupon> findAllValid() {
-        return repo.findAllValid();
+    public List<CouponResponseDTO> findAllValid() {
+        return repo.findAllValid().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Coupon> findByType(CouponType type) {
-        return repo.findByType(type);
+    public List<CouponResponseDTO> findByType(CouponType type) {
+        return repo.findByType(type).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Coupon findByCode(String code) {
-        return repo.findByCode(code);
+    public CouponResponseDTO findByCode(String code) {
+        Coupon coupon = repo.findByCode(code);
+        return toResponse(coupon);
     }
 
     @Override
-    public double applyCoupon(Coupon coupon, double price) {
+    public double applyCoupon(UUID id, double price) {
+        Coupon coupon = repo.findById(id);
+
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+
         if (!coupon.isValid()) return price;
-
         CouponType type = coupon.getCoupon_type();
         if (type == null) throw new IllegalArgumentException("Coupon type is null");
 
         CouponStrategy strategy = strategyFactory.getStrategy(type);
         return strategy.apply(price, coupon.getDiscount_amount());
+    }
+
+    @Override
+    public CouponResponseDTO findById(UUID id) {
+        Coupon coupon = repo.findById(id);
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        return toResponse(coupon);
+    }
+
+
+    private CouponResponseDTO toResponse(Coupon coupon) {
+        return CouponResponseDTO.builder()
+                .id(coupon.getId())
+                .code(coupon.getCode())
+                .coupon_type(coupon.getCoupon_type().name())
+                .discount_amount(coupon.getDiscount_amount())
+                .max_usage(coupon.getMax_usage())
+                .start_date(coupon.getStart_date())
+                .end_date(coupon.getEnd_date())
+                .build();
     }
 }
