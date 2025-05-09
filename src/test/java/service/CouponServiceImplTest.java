@@ -40,7 +40,7 @@ class CouponServiceImplTest {
 
     @Test
     void applyPercentageCoupon() {
-        Coupon c = new Coupon(CouponType.PERCENTAGE, 0.25, 2);
+        Coupon c = new Coupon(CouponType.PERCENTAGE, 25, 2);
         CouponStrategy strategy = new PercentageCouponStrategy();
         when(factory.getStrategy(CouponType.PERCENTAGE)).thenReturn(strategy);
         assertEquals(75000, service.applyCoupon(c, 100000));
