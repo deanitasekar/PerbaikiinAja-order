@@ -1,8 +1,9 @@
-package id.ac.ui.cs.advprog.order.service;
+package service;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 import id.ac.ui.cs.advprog.order.repository.CouponRepository;
+import id.ac.ui.cs.advprog.order.service.CouponServiceImpl;
 import id.ac.ui.cs.advprog.order.strategy.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
