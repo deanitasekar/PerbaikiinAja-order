@@ -1,9 +1,10 @@
-package id.ac.ui.cs.advprog.order.strategy;
+package id.ac.ui.cs.advprog.order.factory;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
+import id.ac.ui.cs.advprog.order.strategy.CouponStrategy;
+import id.ac.ui.cs.advprog.order.strategy.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class CouponStrategyFactoryTest {
