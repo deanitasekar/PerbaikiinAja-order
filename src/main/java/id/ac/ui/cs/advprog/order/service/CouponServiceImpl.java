@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.order.service;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
+import id.ac.ui.cs.advprog.order.factory.CouponStrategyFactory;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 import id.ac.ui.cs.advprog.order.repository.CouponRepository;
 import id.ac.ui.cs.advprog.order.strategy.*;
@@ -11,18 +12,11 @@ import java.util.UUID;
 public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository repo;
-    private final FixedCouponStrategy fixedStrategy;
-    private final PercentageCouponStrategy percentageStrategy;
-    private final RandomCouponStrategy randomStrategy;
+    private final CouponStrategyFactory strategyFactory;
 
-    public CouponServiceImpl(CouponRepository repo,
-                             FixedCouponStrategy fixedStrategy,
-                             PercentageCouponStrategy percentageStrategy,
-                             RandomCouponStrategy randomStrategy) {
+    public CouponServiceImpl(CouponRepository repo, CouponStrategyFactory strategyFactory) {
         this.repo = repo;
-        this.fixedStrategy = fixedStrategy;
-        this.percentageStrategy = percentageStrategy;
-        this.randomStrategy = randomStrategy;
+        this.strategyFactory = strategyFactory;
     }
 
     @Override

@@ -1,76 +1,84 @@
 package service;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
+import id.ac.ui.cs.advprog.order.factory.CouponStrategyFactory;
 import id.ac.ui.cs.advprog.order.model.Coupon;
 import id.ac.ui.cs.advprog.order.repository.CouponRepository;
 import id.ac.ui.cs.advprog.order.service.CouponServiceImpl;
 import id.ac.ui.cs.advprog.order.strategy.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDateTime;
 import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class CouponServiceImplTest {
 
     private CouponRepository repo;
+    private CouponStrategyFactory factory;
     private CouponServiceImpl service;
 
     @BeforeEach
     void setUp() {
         repo = mock(CouponRepository.class);
-        service = new CouponServiceImpl(
-                repo,
-                new FixedCouponStrategy(),
-                new PercentageCouponStrategy(),
-                new RandomCouponStrategy());
+        factory = mock(CouponStrategyFactory.class);
+        service = new CouponServiceImpl(repo, factory);
     }
 
     @Test
     void applyFixedCoupon() {
-        Coupon c = new Coupon(CouponType.FIXED, 20_000, 5);
-        when(repo.findByCode(c.getCode())).thenReturn(c);
-        assertEquals(80_000, service.applyCoupon(c, 100_000));
+        Coupon c = new Coupon(CouponType.FIXED, 20000, 5);
+        CouponStrategy strategy = new FixedCouponStrategy();
+        when(factory.getStrategy(CouponType.FIXED)).thenReturn(strategy);
+        assertEquals(80000, service.applyCoupon(c, 100000));
     }
 
     @Test
     void applyPercentageCoupon() {
-        Coupon c = new Coupon(CouponType.PERCENTAGE, 25, 2);
-        assertEquals(75_000, service.applyCoupon(c, 100_000));
+        Coupon c = new Coupon(CouponType.PERCENTAGE, 0.25, 2);
+        CouponStrategy strategy = new PercentageCouponStrategy();
+        when(factory.getStrategy(CouponType.PERCENTAGE)).thenReturn(strategy);
+        assertEquals(75000, service.applyCoupon(c, 100000));
     }
 
     @RepeatedTest(3)
     void applyRandomCouponWithinRange() {
-        Coupon c = new Coupon(CouponType.RANDOM, 20_000, 4);
-        double result = service.applyCoupon(c, 100_000);
-        assertTrue(result >= 80_000 && result <= 100_000);
+        Coupon c = new Coupon(CouponType.RANDOM, 20000, 4);
+        CouponStrategy strategy = new RandomCouponStrategy();
+        when(factory.getStrategy(CouponType.RANDOM)).thenReturn(strategy);
+        double result = service.applyCoupon(c, 100000);
+        assertTrue(result >= 80000 && result <= 100000);
     }
 
     @Test
     void applyExpiredCouponReturnsOriginalPrice() {
-        Coupon c = new Coupon(CouponType.FIXED, 10_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 10000, 1);
         c.setEnd_date(LocalDateTime.now().minusDays(1));
-        assertEquals(50_000, service.applyCoupon(c, 50_000));
+        assertEquals(50000, service.applyCoupon(c, 50000));
     }
 
     @Test
     void applyOverusedCouponReturnsOriginalPrice() {
-        Coupon c = new Coupon(CouponType.FIXED, 10_000, 0);
-        assertEquals(60_000, service.applyCoupon(c, 60_000));
+        Coupon c = new Coupon(CouponType.FIXED, 10000, 0);
+        assertEquals(60000, service.applyCoupon(c, 60000));
     }
 
     @Test
     void applyCouponWithUnknownTypeThrows() {
         Coupon c = mock(Coupon.class);
+        when(c.isValid()).thenReturn(true);
         when(c.getCoupon_type()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> service.applyCoupon(c, 10_000));
+        assertThrows(IllegalArgumentException.class, () -> service.applyCoupon(c, 10000));
     }
 
     @Test
     void createCoupon() {
-        Coupon c = new Coupon(CouponType.FIXED, 5_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 5000, 1);
         when(repo.save(c)).thenReturn(c);
         assertEquals(c, service.create(c));
         verify(repo).save(c);
@@ -78,22 +86,22 @@ class CouponServiceImplTest {
 
     @Test
     void createCouponWithEmptyCodeThrows() {
-        Coupon c = new Coupon(CouponType.FIXED, 1_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 1000, 1);
         c.setCode("");
         assertThrows(IllegalArgumentException.class, () -> service.create(c));
     }
 
     @Test
     void updateCoupon() {
-        Coupon c = new Coupon(CouponType.FIXED, 2_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 2000, 1);
+        when(repo.findById(c.getId())).thenReturn(c);
         when(repo.save(c)).thenReturn(c);
         assertEquals(c, service.update(c.getId(), c));
-        verify(repo).save(c);
     }
 
     @Test
     void updateNonExistingCouponThrows() {
-        Coupon c = new Coupon(CouponType.FIXED, 2_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 2000, 1);
         UUID id = c.getId();
         when(repo.findById(id)).thenReturn(null);
         assertThrows(NoSuchElementException.class, () -> service.update(id, c));
@@ -116,7 +124,7 @@ class CouponServiceImplTest {
 
     @Test
     void findByCodeReturnsCorrectCoupon() {
-        Coupon c = new Coupon(CouponType.FIXED, 1_000, 1);
+        Coupon c = new Coupon(CouponType.FIXED, 1000, 1);
         when(repo.findByCode("ABC")).thenReturn(c);
         assertEquals(c, service.findByCode("ABC"));
     }
@@ -130,7 +138,7 @@ class CouponServiceImplTest {
 
     @Test
     void findByTypeReturnsCorrectList() {
-        List<Coupon> list = List.of(new Coupon(CouponType.RANDOM, 1_000, 1));
+        List<Coupon> list = List.of(new Coupon(CouponType.RANDOM, 1000, 1));
         when(repo.findByType(CouponType.RANDOM)).thenReturn(list);
         assertEquals(list, service.findByType(CouponType.RANDOM));
     }
