@@ -115,6 +115,7 @@ public class CouponControllerTest {
     @Test
     void testUpdateCoupon() throws Exception {
         UpdateCouponRequestDTO request = UpdateCouponRequestDTO.builder()
+                .coupon_type("FIXED")
                 .discount_amount(15000)
                 .max_usage(10)
                 .start_date(LocalDateTime.now())
@@ -166,6 +167,7 @@ public class CouponControllerTest {
         mockMvc.perform(put("/coupons/" + couponId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(UpdateCouponRequestDTO.builder()
+                                .coupon_type("FIXED")
                                 .discount_amount(10000)
                                 .max_usage(10)
                                 .build())))
