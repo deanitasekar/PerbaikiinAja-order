@@ -2,7 +2,9 @@ package id.ac.ui.cs.advprog.order.factory;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.strategy.*;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CouponStrategyFactory {
 
     private final CouponStrategy fixedStrategy = new FixedCouponStrategy();
