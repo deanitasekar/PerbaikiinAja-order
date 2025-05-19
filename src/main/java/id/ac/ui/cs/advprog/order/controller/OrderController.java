@@ -66,7 +66,23 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponseDTO> getOrderDetail{
+    public ResponseEntity<OrderResponseDTO> getOrderDetail(
+            @PathVariable UUID orderId,
+            Authentication authentication) {
+        try {
+            UUID customerId = extractCustomerId(authentication);
+
+            OrderResponseDTO order = orderService.getOrderById(orderId);
+
+            if (!order.getCustomerId().equals(customerId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+            }
+            return ResponseEntity.ok(order);
+
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{orderId}")
