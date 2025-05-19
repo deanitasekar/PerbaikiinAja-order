@@ -51,6 +51,7 @@ public class OrderControllerTest {
 
     private UUID customerId;
     private UUID orderId;
+    private UUID nonExistentOrderId;
     private OrderRequestDTO orderRequest;
     private UpdateOrderRequestDTO updateOrderRequest;
     private OrderResponseDTO orderResponse;
@@ -59,6 +60,7 @@ public class OrderControllerTest {
     void setUp() {
         customerId = UUID.fromString("00000123-5189-5678-1039-185016273000");
         orderId = UUID.randomUUID();
+        nonExistentOrderId = UUID.randomUUID();
 
         orderRequest = new OrderRequestDTO();
         orderRequest.setCustomerId(customerId);
@@ -140,6 +142,52 @@ public class OrderControllerTest {
             assertEquals(orderId, response.getOrders().get(0).getId());
             assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getOrders().get(0).getItemName());
         });
+    }
+
+    @Test
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testGetOrderDetailSuccess() throws Exception {
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenReturn(orderResponse);
+
+        mockMvc.perform(get("/orders/" + orderId)
+                        .with(csrf())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(result -> {
+                    OrderResponseDTO response = objectMapper.readValue(
+                            result.getResponse().getContentAsString(),
+                            OrderResponseDTO.class
+                    );
+                    assertEquals(orderId, response.getId());
+                    assertEquals("MacBook Pro 16-inch M2 Max 2023", response.getItemName());
+                });
+    }
+
+    @Test
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testGetOrderDetailNotFound() throws Exception {
+        Mockito.when(orderService.getOrderById(nonExistentOrderId))
+                .thenThrow(new EntityNotFoundException("Order not found"));
+
+        mockMvc.perform(get("/orders/" + nonExistentOrderId)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "00000123-5189-5678-1039-185016273000", roles = {"USER"})
+    void testGetOrderDetailForbidden() throws Exception {
+        OrderResponseDTO differentOwnerResponse = new OrderResponseDTO();
+        differentOwnerResponse.setId(orderId);
+        differentOwnerResponse.setCustomerId(UUID.randomUUID());
+
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenReturn(differentOwnerResponse);
+
+        mockMvc.perform(get("/orders/" + orderId)
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -340,16 +388,5 @@ public class OrderControllerTest {
             assertFalse(response.isSuccess());
             assertEquals("Order cannot be cancelled after technician has approved it", response.getMessage());
         });
-    }
-
-    @Test
-    void testGetOrderWhenUserIsNotAuthenticated() throws Exception {
-        mockMvc.perform(
-                get("/orders")
-                        .accept(MediaType.APPLICATION_JSON)
-                        .contentType(MediaType.APPLICATION_JSON)
-        ).andExpectAll(
-                status().isForbidden()
-        );
     }
 }
