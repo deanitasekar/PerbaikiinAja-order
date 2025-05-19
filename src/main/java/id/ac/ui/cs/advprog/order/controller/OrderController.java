@@ -65,6 +65,10 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponseDTO> getOrderDetail{
+    }
+
     @PutMapping("/{orderId}")
     public ResponseEntity<OrderResponseDTO> updateOrder(
             @PathVariable UUID orderId,
