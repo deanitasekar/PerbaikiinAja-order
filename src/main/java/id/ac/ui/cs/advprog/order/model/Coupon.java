@@ -35,7 +35,7 @@ public class Coupon {
         this.code = coupon_type.name() + "-" + suffix;
 
         this.created_at = LocalDateTime.now();
-        this.start_date = this.start_date != null ? this.start_date : this.created_at;
+        this.start_date = LocalDateTime.now();
     }
 
     public boolean isValid() {

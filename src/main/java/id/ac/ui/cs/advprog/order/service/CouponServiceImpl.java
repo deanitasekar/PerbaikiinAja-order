@@ -34,7 +34,13 @@ public class CouponServiceImpl implements CouponService {
         }
 
         Coupon coupon = new Coupon(type, request.getDiscount_amount(), request.getMax_usage());
-        coupon.setStart_date(request.getStart_date());
+
+        if (request.getStart_date() != null) {
+            coupon.setStart_date(request.getStart_date());
+        } else {
+            coupon.setStart_date(coupon.getCreated_at());
+        }
+
         coupon.setEnd_date(request.getEnd_date());
 
         return toResponse(repo.save(coupon));
