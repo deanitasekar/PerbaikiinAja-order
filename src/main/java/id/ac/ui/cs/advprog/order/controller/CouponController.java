@@ -78,4 +78,24 @@ public class CouponController {
                         .build()
         );
     }
+
+    @PostMapping("/{id}/apply")
+    public ResponseEntity<ApplyCouponResponseDTO> applyCoupon(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApplyCouponRequestDTO request) {
+
+        double original = request.getOriginal_price();
+        double discounted = couponService.applyCoupon(id, original);
+        CouponResponseDTO coupon = couponService.findById(id);
+
+        ApplyCouponResponseDTO response = ApplyCouponResponseDTO.builder()
+                .original_price(original)
+                .discounted_price(discounted)
+                .coupon_code(coupon.getCode())
+                .applied(original != discounted)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
 }
