@@ -104,12 +104,19 @@ public class CouponServiceImpl implements CouponService {
         if (coupon == null) throw new EntityNotFoundException("Coupon not found");
 
         if (!coupon.isValid()) return price;
+
         CouponType type = coupon.getCoupon_type();
         if (type == null) throw new IllegalArgumentException("Coupon type is null");
 
         CouponStrategy strategy = strategyFactory.getStrategy(type);
-        return strategy.apply(price, coupon.getDiscount_amount());
+        double discountedPrice = strategy.apply(price, coupon.getDiscount_amount());
+
+        coupon.incrementUsage();
+        repo.save(coupon);
+
+        return discountedPrice;
     }
+
 
     @Override
     public CouponResponseDTO findById(UUID id) {
