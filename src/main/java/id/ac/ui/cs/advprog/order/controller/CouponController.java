@@ -88,4 +88,14 @@ public class CouponController {
                         .build()
         );
     }
+
+    @PostMapping("/{id}/preview")
+    public ResponseEntity<ApplyCouponResponseDTO> previewCoupon(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApplyCouponRequestDTO request) {
+
+        ApplyCouponResponseDTO response = couponService.previewCoupon(id, request.getOriginal_price());
+        return ResponseEntity.ok(response);
+    }
+
 }
