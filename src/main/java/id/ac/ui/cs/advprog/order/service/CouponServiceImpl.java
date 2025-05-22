@@ -151,8 +151,32 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public ApplyCouponResponseDTO previewCoupon(UUID id, double price) {
-        return null;
+        Coupon coupon = repo.findById(id);
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+
+        if (!coupon.isValid()) {
+            return ApplyCouponResponseDTO.builder()
+                    .original_price(price)
+                    .discounted_price(price)
+                    .coupon_code(coupon.getCode())
+                    .applied(false)
+                    .build();
+        }
+
+        CouponType type = coupon.getCoupon_type();
+        if (type == null) throw new IllegalArgumentException("Coupon type is null");
+
+        CouponStrategy strategy = strategyFactory.getStrategy(type);
+        double discounted = strategy.apply(price, coupon.getDiscount_amount());
+
+        return ApplyCouponResponseDTO.builder()
+                .original_price(price)
+                .discounted_price(discounted)
+                .coupon_code(coupon.getCode())
+                .applied(true)
+                .build();
     }
+
 
 
 }
