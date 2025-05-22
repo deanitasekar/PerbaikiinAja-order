@@ -11,7 +11,7 @@ import java.util.UUID;
 public class CouponResponseDTO {
     private UUID id;
     private String code;
-    private String coupon_type;
+    private String couponType;
     private double discount_amount;
     private int max_usage;
     private LocalDateTime start_date;

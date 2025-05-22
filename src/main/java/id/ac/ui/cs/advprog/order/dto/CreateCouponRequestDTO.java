@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 public class CreateCouponRequestDTO {
     @NotBlank(message = "Coupon type is required")
-    private String coupon_type;
+    private String couponType;
 
     @PositiveOrZero(message = "Discount must be ≥ 0")
     private double discount_amount;

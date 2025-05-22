@@ -28,9 +28,9 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponseDTO create(CreateCouponRequestDTO request) {
         CouponType type;
         try {
-            type = CouponType.valueOf(request.getCoupon_type());
+            type = CouponType.valueOf(request.getCouponType());
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid coupon type: " + request.getCoupon_type());
+            throw new IllegalArgumentException("Invalid coupon type: " + request.getCouponType());
         }
 
         Coupon coupon = new Coupon(type, request.getDiscount_amount(), request.getMax_usage());
@@ -48,9 +48,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public CouponResponseDTO update(UUID id, UpdateCouponRequestDTO request) {
-        Coupon coupon = repo.findById(id);
-
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
 
         coupon.setDiscount_amount(request.getDiscount_amount());
@@ -63,9 +61,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public void delete(UUID id) {
-        Coupon coupon = repo.findById(id);
-
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
         repo.deleteById(coupon.getId());
     }
@@ -84,9 +80,11 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public CouponListResponseDTO findAllValid() {
-        List<CouponResponseDTO> validList = repo.findAllValid().stream()
+        List<CouponResponseDTO> validList = repo.findAll().stream()
+                .filter(Coupon::isValid)
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+
         return CouponListResponseDTO.builder()
                 .coupons(validList)
                 .total(validList.size())
@@ -94,16 +92,19 @@ public class CouponServiceImpl implements CouponService {
     }
 
 
+
     @Override
-    public CouponListResponseDTO findByType(CouponType type) {
-        List<CouponResponseDTO> filtered = repo.findByType(type).stream()
+    public CouponListResponseDTO findByCouponType(CouponType type) {
+        List<CouponResponseDTO> filtered = repo.findByCouponType(type).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+
         return CouponListResponseDTO.builder()
                 .coupons(filtered)
                 .total(filtered.size())
                 .build();
     }
+
 
 
     @Override
@@ -115,8 +116,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public CouponResponseDTO findById(UUID id) {
-        Coupon coupon = repo.findById(id);
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
         return toResponse(coupon);
     }
 
@@ -125,7 +125,7 @@ public class CouponServiceImpl implements CouponService {
         return CouponResponseDTO.builder()
                 .id(coupon.getId())
                 .code(coupon.getCode())
-                .coupon_type(coupon.getCoupon_type().name())
+                .couponType(coupon.getCouponType().name())
                 .discount_amount(coupon.getDiscount_amount())
                 .max_usage(coupon.getMax_usage())
                 .start_date(coupon.getStart_date())
@@ -135,8 +135,8 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public ApplyCouponResponseDTO applyCoupon(UUID id, double price) {
-        Coupon coupon = repo.findById(id);
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        Coupon coupon = repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
         if (!coupon.isValid()) {
             return ApplyCouponResponseDTO.builder()
@@ -147,10 +147,10 @@ public class CouponServiceImpl implements CouponService {
                     .build();
         }
 
-        CouponType type = coupon.getCoupon_type();
+        CouponType type = coupon.getCouponType();
         if (type == null) throw new IllegalArgumentException("Coupon type is null");
 
-        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getCoupon_type());
+        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getCouponType());
         double discounted = strategy.apply(price, coupon.getDiscount_amount());
 
         coupon.incrementUsage();
@@ -166,8 +166,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public ApplyCouponResponseDTO previewCoupon(UUID id, double price) {
-        Coupon coupon = repo.findById(id);
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
         if (!coupon.isValid()) {
             return ApplyCouponResponseDTO.builder()
@@ -178,7 +177,7 @@ public class CouponServiceImpl implements CouponService {
                     .build();
         }
 
-        CouponType type = coupon.getCoupon_type();
+        CouponType type = coupon.getCouponType();
         if (type == null) throw new IllegalArgumentException("Coupon type is null");
 
         CouponStrategy strategy = strategyFactory.getStrategy(type);

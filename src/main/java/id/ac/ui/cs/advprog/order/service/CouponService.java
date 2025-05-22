@@ -11,7 +11,7 @@ public interface CouponService {
     void delete(UUID id);
     CouponListResponseDTO findAll();
     CouponListResponseDTO findAllValid();
-    CouponListResponseDTO findByType(CouponType type);
+    CouponListResponseDTO findByCouponType(CouponType type);
     CouponResponseDTO findByCode(String code);
     ApplyCouponResponseDTO applyCoupon(UUID id, double price);
     CouponResponseDTO findById(UUID id);
