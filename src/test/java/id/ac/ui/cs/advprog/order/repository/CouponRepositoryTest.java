@@ -2,29 +2,29 @@ package id.ac.ui.cs.advprog.order.repository;
 
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import id.ac.ui.cs.advprog.order.model.Coupon;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DataJpaTest
 public class CouponRepositoryTest {
 
+    @Autowired
     private CouponRepository repository;
-
-    @BeforeEach
-    void set_up() {
-        repository = new CouponRepository();
-    }
 
     @Test
     void testSaveCoupon() {
         Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
         repository.save(coupon);
 
-        Coupon result = repository.findById(coupon.getId());
+        Coupon result = repository.findById(coupon.getId()).orElse(null);
         assertNotNull(result);
         assertEquals(coupon.getCode(), result.getCode());
     }
@@ -34,14 +34,14 @@ public class CouponRepositoryTest {
         Coupon coupon = new Coupon(CouponType.FIXED, 10.0, 5);
         repository.save(coupon);
 
-        Coupon found = repository.findById(coupon.getId());
+        Coupon found = repository.findById(coupon.getId()).orElse(null);
         assertEquals(coupon.getCode(), found.getCode());
     }
 
     @Test
     void testFindByIdNotExists() {
         UUID fakeId = UUID.randomUUID();
-        assertNull(repository.findById(fakeId));
+        assertTrue(repository.findById(fakeId).isEmpty());
     }
 
     @Test
@@ -59,7 +59,7 @@ public class CouponRepositoryTest {
         repository.save(coupon);
 
         repository.deleteById(coupon.getId());
-        assertNull(repository.findById(coupon.getId()));
+        assertTrue(repository.findById(coupon.getId()).isEmpty());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class CouponRepositoryTest {
         coupon.setDiscount_amount(7.0);
         repository.save(coupon);
 
-        Coupon updated = repository.findById(coupon.getId());
+        Coupon updated = repository.findById(coupon.getId()).orElse(null);
         assertEquals(7.0, updated.getDiscount_amount());
     }
 
@@ -107,7 +107,10 @@ public class CouponRepositoryTest {
         repository.save(expired);
         repository.save(deleted);
 
-        List<Coupon> validOnly = repository.findAllValid();
+        List<Coupon> validOnly = repository.findAll().stream()
+                .filter(Coupon::isValid)
+                .toList();
+
         assertEquals(1, validOnly.size());
         assertEquals(valid.getId(), validOnly.get(0).getId());
     }
@@ -121,7 +124,10 @@ public class CouponRepositoryTest {
         repository.save(second);
         repository.save(first);
 
-        List<Coupon> sorted = repository.findAllSortedByCreatedAt();
+        List<Coupon> sorted = repository.findAll().stream()
+                .sorted((a, b) -> a.getCreated_at().compareTo(b.getCreated_at()))
+                .toList();
+
         assertEquals(first.getId(), sorted.get(0).getId());
         assertEquals(second.getId(), sorted.get(1).getId());
     }
@@ -134,21 +140,24 @@ public class CouponRepositoryTest {
         coupon.setDeleted_at(LocalDateTime.now());
         repository.save(coupon);
 
-        List<Coupon> allValid = repository.findAllValid();
+        List<Coupon> allValid = repository.findAll().stream()
+                .filter(Coupon::isValid)
+                .toList();
+
         assertTrue(allValid.stream().noneMatch(c -> c.getId().equals(coupon.getId())));
     }
 
     @Test
-    void testSaveDuplicateCodeAllowed() {
+    void testSaveDuplicateCodeShouldFail() {
         Coupon one = new Coupon(CouponType.FIXED, 5.0, 2);
-        Coupon two = new Coupon(CouponType.FIXED, 5.0, 2);
+        repository.save(one);
 
+        Coupon two = new Coupon(CouponType.FIXED, 5.0, 2);
         two.setCode(one.getCode());
 
-        repository.save(one);
-        repository.save(two);
-
-        assertEquals(two.getId(), repository.findByCode(one.getCode()).getId());
+        assertThrows(DataIntegrityViolationException.class,
+                () -> repository.saveAndFlush(two),
+                "Duplicate code should not be allowed");
     }
 
     @Test
@@ -159,9 +168,8 @@ public class CouponRepositoryTest {
         repository.save(fixed);
         repository.save(percent);
 
-        List<Coupon> result = repository.findByType(CouponType.FIXED);
+        List<Coupon> result = repository.findByCouponType(CouponType.FIXED);
         assertEquals(1, result.size());
         assertEquals(fixed.getId(), result.get(0).getId());
     }
-
 }
