@@ -76,7 +76,7 @@ public class CouponControllerTest {
 
     @Test
     void testGetAllCoupons() throws Exception {
-        CouponResponseDTO response = CouponResponseDTO.builder()
+        CouponResponseDTO coupon = CouponResponseDTO.builder()
                 .id(couponId)
                 .code("FIXED-XYZ")
                 .coupon_type("FIXED")
@@ -86,12 +86,20 @@ public class CouponControllerTest {
                 .end_date(LocalDateTime.now().plusDays(7))
                 .build();
 
-        Mockito.when(couponService.findAll()).thenReturn(List.of(response));
+        CouponListResponseDTO response = CouponListResponseDTO.builder()
+                .coupons(List.of(coupon))
+                .total(1)
+                .build();
+
+        Mockito.when(couponService.findAll()).thenReturn(response);
 
         mockMvc.perform(get("/coupons"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].code").value("FIXED-XYZ"));
+                .andExpect(jsonPath("$.coupons[0].code").value("FIXED-XYZ"))
+                .andExpect(jsonPath("$.total").value(1));
     }
+
+
 
     @Test
     void testGetCouponById() throws Exception {

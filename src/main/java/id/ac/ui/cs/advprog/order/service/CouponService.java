@@ -9,9 +9,9 @@ public interface CouponService {
     CouponResponseDTO create(CreateCouponRequestDTO request);
     CouponResponseDTO update(UUID id, UpdateCouponRequestDTO request);
     void delete(UUID id);
-    List<CouponResponseDTO> findAll();
-    List<CouponResponseDTO> findAllValid();
-    List<CouponResponseDTO> findByType(CouponType type);
+    CouponListResponseDTO findAll();
+    CouponListResponseDTO findAllValid();
+    CouponListResponseDTO findByType(CouponType type);
     CouponResponseDTO findByCode(String code);
     ApplyCouponResponseDTO applyCoupon(UUID id, double price);
     CouponResponseDTO findById(UUID id);

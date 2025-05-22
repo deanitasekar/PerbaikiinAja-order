@@ -71,25 +71,40 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    public List<CouponResponseDTO> findAll() {
-        return repo.findAll().stream()
+    public CouponListResponseDTO findAll() {
+        List<CouponResponseDTO> list = repo.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+        return CouponListResponseDTO.builder()
+                .coupons(list)
+                .total(list.size())
+                .build();
     }
 
-    @Override
-    public List<CouponResponseDTO> findAllValid() {
-        return repo.findAllValid().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
 
     @Override
-    public List<CouponResponseDTO> findByType(CouponType type) {
-        return repo.findByType(type).stream()
+    public CouponListResponseDTO findAllValid() {
+        List<CouponResponseDTO> validList = repo.findAllValid().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+        return CouponListResponseDTO.builder()
+                .coupons(validList)
+                .total(validList.size())
+                .build();
     }
+
+
+    @Override
+    public CouponListResponseDTO findByType(CouponType type) {
+        List<CouponResponseDTO> filtered = repo.findByType(type).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+        return CouponListResponseDTO.builder()
+                .coupons(filtered)
+                .total(filtered.size())
+                .build();
+    }
+
 
     @Override
     public CouponResponseDTO findByCode(String code) {

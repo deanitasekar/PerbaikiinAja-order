@@ -209,25 +209,29 @@ class CouponServiceImplTest {
     void findAll() {
         when(repo.findAll()).thenReturn(List.of(coupon));
 
-        List<CouponResponseDTO> list = service.findAll();
-        assertEquals(1, list.size());
-    }
-
-    @Test
-    void findByType() {
-        when(repo.findByType(CouponType.FIXED)).thenReturn(List.of(coupon));
-
-        List<CouponResponseDTO> list = service.findByType(CouponType.FIXED);
-        assertEquals(1, list.size());
+        CouponListResponseDTO res = service.findAll();
+        assertEquals(1, res.getTotal());
+        assertEquals(coupon.getId(), res.getCoupons().get(0).getId());
     }
 
     @Test
     void findAllValid() {
         when(repo.findAllValid()).thenReturn(List.of(coupon));
 
-        List<CouponResponseDTO> list = service.findAllValid();
-        assertEquals(1, list.size());
+        CouponListResponseDTO res = service.findAllValid();
+        assertEquals(1, res.getTotal());
+        assertEquals(coupon.getId(), res.getCoupons().get(0).getId());
     }
+
+    @Test
+    void findByType() {
+        when(repo.findByType(CouponType.FIXED)).thenReturn(List.of(coupon));
+
+        CouponListResponseDTO res = service.findByType(CouponType.FIXED);
+        assertEquals(1, res.getTotal());
+        assertEquals("FIXED", res.getCoupons().get(0).getCoupon_type());
+    }
+
 
     @Test
     void getById_success() {

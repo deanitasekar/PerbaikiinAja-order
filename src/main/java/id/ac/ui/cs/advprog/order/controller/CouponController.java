@@ -29,10 +29,10 @@ public class CouponController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CouponResponseDTO>> getAllCoupons() {
-        List<CouponResponseDTO> response = couponService.findAll();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CouponListResponseDTO> getAllCoupons() {
+        return ResponseEntity.ok(couponService.findAll());
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<CouponResponseDTO> getCouponById(@PathVariable UUID id) {
