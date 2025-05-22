@@ -244,4 +244,20 @@ class CouponServiceImplTest {
         assertThrows(EntityNotFoundException.class, () -> service.findById(coupon.getId()));
     }
 
+    @Test
+    void previewCoupon_shouldReturnDiscountedPriceWithoutIncrementingUsage() {
+        when(repo.findById(coupon.getId())).thenReturn(coupon);
+        when(factory.getStrategy(CouponType.FIXED)).thenReturn(new FixedCouponStrategy());
+
+        int usageBefore = coupon.getCurrent_usage();
+
+        ApplyCouponResponseDTO result = service.previewCoupon(coupon.getId(), 100000);
+
+        assertEquals(80000, result.getDiscounted_price());
+        assertEquals(100000, result.getOriginal_price());
+        assertEquals(coupon.getCode(), result.getCoupon_code());
+        assertTrue(result.isApplied());
+        assertEquals(usageBefore, coupon.getCurrent_usage());
+    }
+
 }
