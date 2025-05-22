@@ -59,6 +59,16 @@ public class CouponController {
         );
     }
 
+    @PostMapping("/{id}/apply")
+    public ResponseEntity<ApplyCouponResponseDTO> applyCoupon(
+            @PathVariable UUID id,
+            @Valid @RequestBody ApplyCouponRequestDTO request) {
+
+        ApplyCouponResponseDTO response = couponService.applyCoupon(id, request.getOriginal_price());
+        return ResponseEntity.ok(response);
+    }
+
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ResponseDTO> handleIllegalState(Exception ex) {
         return ResponseEntity.badRequest().body(
@@ -78,24 +88,4 @@ public class CouponController {
                         .build()
         );
     }
-
-    @PostMapping("/{id}/apply")
-    public ResponseEntity<ApplyCouponResponseDTO> applyCoupon(
-            @PathVariable UUID id,
-            @Valid @RequestBody ApplyCouponRequestDTO request) {
-
-        double original = request.getOriginal_price();
-        double discounted = couponService.applyCoupon(id, original);
-        CouponResponseDTO coupon = couponService.findById(id);
-
-        ApplyCouponResponseDTO response = ApplyCouponResponseDTO.builder()
-                .original_price(original)
-                .discounted_price(discounted)
-                .coupon_code(coupon.getCode())
-                .applied(original != discounted)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
 }

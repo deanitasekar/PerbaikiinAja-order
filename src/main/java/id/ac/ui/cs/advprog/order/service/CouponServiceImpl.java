@@ -97,26 +97,6 @@ public class CouponServiceImpl implements CouponService {
         return toResponse(coupon);
     }
 
-    @Override
-    public double applyCoupon(UUID id, double price) {
-        Coupon coupon = repo.findById(id);
-
-        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
-
-        if (!coupon.isValid()) return price;
-
-        CouponType type = coupon.getCoupon_type();
-        if (type == null) throw new IllegalArgumentException("Coupon type is null");
-
-        CouponStrategy strategy = strategyFactory.getStrategy(type);
-        double discountedPrice = strategy.apply(price, coupon.getDiscount_amount());
-
-        coupon.incrementUsage();
-        repo.save(coupon);
-
-        return discountedPrice;
-    }
-
 
     @Override
     public CouponResponseDTO findById(UUID id) {
@@ -137,4 +117,36 @@ public class CouponServiceImpl implements CouponService {
                 .end_date(coupon.getEnd_date())
                 .build();
     }
+
+    @Override
+    public ApplyCouponResponseDTO applyCoupon(UUID id, double price) {
+        Coupon coupon = repo.findById(id);
+        if (coupon == null) throw new EntityNotFoundException("Coupon not found");
+
+        if (!coupon.isValid()) {
+            return ApplyCouponResponseDTO.builder()
+                    .original_price(price)
+                    .discounted_price(price)
+                    .coupon_code(coupon.getCode())
+                    .applied(false)
+                    .build();
+        }
+
+        CouponType type = coupon.getCoupon_type();
+        if (type == null) throw new IllegalArgumentException("Coupon type is null");
+
+        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getCoupon_type());
+        double discounted = strategy.apply(price, coupon.getDiscount_amount());
+
+        coupon.incrementUsage();
+        repo.save(coupon);
+
+        return ApplyCouponResponseDTO.builder()
+                .original_price(price)
+                .discounted_price(discounted)
+                .coupon_code(coupon.getCode())
+                .applied(true)
+                .build();
+    }
+
 }

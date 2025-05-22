@@ -13,7 +13,7 @@ public interface CouponService {
     List<CouponResponseDTO> findAllValid();
     List<CouponResponseDTO> findByType(CouponType type);
     CouponResponseDTO findByCode(String code);
-    double applyCoupon(UUID couponId, double price);
+    ApplyCouponResponseDTO applyCoupon(UUID id, double price);
     CouponResponseDTO findById(UUID id);
 
 }
