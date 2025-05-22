@@ -196,7 +196,7 @@ public class CouponControllerTest {
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
-                .applied(true)
+                .valid(true)
                 .build();
 
         Mockito.when(couponService.applyCoupon(eq(couponId), eq(100000.0)))
@@ -209,7 +209,7 @@ public class CouponControllerTest {
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
-                .andExpect(jsonPath("$.applied").value(true));
+                .andExpect(jsonPath("$.valid").value(true));
     }
 
     @Test
@@ -221,7 +221,7 @@ public class CouponControllerTest {
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
-                .applied(true)
+                .valid(true)
                 .build();
 
         Mockito.when(couponService.previewCoupon(eq(couponId), eq(100000.0)))
@@ -234,7 +234,7 @@ public class CouponControllerTest {
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
-                .andExpect(jsonPath("$.applied").value(true));
+                .andExpect(jsonPath("$.valid").value(true));
     }
 
 

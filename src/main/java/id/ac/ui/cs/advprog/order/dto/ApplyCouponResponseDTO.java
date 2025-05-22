@@ -9,5 +9,5 @@ public class ApplyCouponResponseDTO {
     private double original_price;
     private double discounted_price;
     private String coupon_code;
-    private boolean applied;
+    private boolean valid;
 }

@@ -128,7 +128,7 @@ public class CouponServiceImpl implements CouponService {
                     .original_price(price)
                     .discounted_price(price)
                     .coupon_code(coupon.getCode())
-                    .applied(false)
+                    .valid(false)
                     .build();
         }
 
@@ -145,7 +145,7 @@ public class CouponServiceImpl implements CouponService {
                 .original_price(price)
                 .discounted_price(discounted)
                 .coupon_code(coupon.getCode())
-                .applied(true)
+                .valid(true)
                 .build();
     }
 
@@ -159,7 +159,7 @@ public class CouponServiceImpl implements CouponService {
                     .original_price(price)
                     .discounted_price(price)
                     .coupon_code(coupon.getCode())
-                    .applied(false)
+                    .valid(false)
                     .build();
         }
 
@@ -173,7 +173,7 @@ public class CouponServiceImpl implements CouponService {
                 .original_price(price)
                 .discounted_price(discounted)
                 .coupon_code(coupon.getCode())
-                .applied(true)
+                .valid(true)
                 .build();
     }
 

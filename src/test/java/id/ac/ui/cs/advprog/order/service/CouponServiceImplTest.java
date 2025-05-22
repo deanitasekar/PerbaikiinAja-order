@@ -120,7 +120,7 @@ class CouponServiceImplTest {
 
         assertEquals(80000, res.getDiscounted_price());
         assertEquals(coupon.getCode(), res.getCoupon_code());
-        assertTrue(res.isApplied());
+        assertTrue(res.isValid());
     }
 
 
@@ -135,7 +135,7 @@ class CouponServiceImplTest {
 
         assertEquals(75000, res.getDiscounted_price());
         assertEquals(coupon.getCode(), res.getCoupon_code());
-        assertTrue(res.isApplied());
+        assertTrue(res.isValid());
     }
 
 
@@ -149,7 +149,7 @@ class CouponServiceImplTest {
         ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000);
 
         assertTrue(res.getDiscounted_price() >= 80000 && res.getDiscounted_price() <= 100000);
-        assertTrue(res.isApplied());
+        assertTrue(res.isValid());
     }
 
 
@@ -161,7 +161,7 @@ class CouponServiceImplTest {
         ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 50000);
 
         assertEquals(50000, res.getDiscounted_price());
-        assertFalse(res.isApplied());
+        assertFalse(res.isValid());
     }
 
 
@@ -173,7 +173,7 @@ class CouponServiceImplTest {
         ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 60000);
 
         assertEquals(60000, res.getDiscounted_price());
-        assertFalse(res.isApplied());
+        assertFalse(res.isValid());
     }
 
 
@@ -256,7 +256,7 @@ class CouponServiceImplTest {
         assertEquals(80000, result.getDiscounted_price());
         assertEquals(100000, result.getOriginal_price());
         assertEquals(coupon.getCode(), result.getCoupon_code());
-        assertTrue(result.isApplied());
+        assertTrue(result.isValid());
         assertEquals(usageBefore, coupon.getCurrent_usage());
     }
 
