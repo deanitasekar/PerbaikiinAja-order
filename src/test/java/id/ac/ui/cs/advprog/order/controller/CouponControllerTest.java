@@ -99,6 +99,30 @@ public class CouponControllerTest {
                 .andExpect(jsonPath("$.total").value(1));
     }
 
+    @Test
+    void testGetAllValidCoupons() throws Exception {
+        CouponResponseDTO coupon = CouponResponseDTO.builder()
+                .id(couponId)
+                .code("FIXED-VALID")
+                .coupon_type("FIXED")
+                .discount_amount(15000)
+                .max_usage(5)
+                .start_date(LocalDateTime.now().minusDays(1))
+                .end_date(LocalDateTime.now().plusDays(5))
+                .build();
+
+        CouponListResponseDTO response = CouponListResponseDTO.builder()
+                .coupons(List.of(coupon))
+                .total(1)
+                .build();
+
+        Mockito.when(couponService.findAllValid()).thenReturn(response);
+
+        mockMvc.perform(get("/coupons/valid"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coupons[0].code").value("FIXED-VALID"))
+                .andExpect(jsonPath("$.total").value(1));
+    }
 
 
     @Test
