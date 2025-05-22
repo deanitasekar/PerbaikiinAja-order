@@ -33,6 +33,10 @@ public class CouponController {
         return ResponseEntity.ok(couponService.findAll());
     }
 
+    @GetMapping("/valid")
+    public ResponseEntity<CouponListResponseDTO> getAllValidCoupons() {
+        return ResponseEntity.ok(couponService.findAllValid());
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<CouponResponseDTO> getCouponById(@PathVariable UUID id) {
