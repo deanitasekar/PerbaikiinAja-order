@@ -149,4 +149,10 @@ public class CouponServiceImpl implements CouponService {
                 .build();
     }
 
+    @Override
+    public ApplyCouponResponseDTO previewCoupon(UUID id, double price) {
+        return null;
+    }
+
+
 }

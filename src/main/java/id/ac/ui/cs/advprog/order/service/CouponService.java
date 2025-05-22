@@ -15,5 +15,6 @@ public interface CouponService {
     CouponResponseDTO findByCode(String code);
     ApplyCouponResponseDTO applyCoupon(UUID id, double price);
     CouponResponseDTO findById(UUID id);
+    ApplyCouponResponseDTO previewCoupon(UUID id, double price);
 
 }
