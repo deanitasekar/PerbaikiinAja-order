@@ -186,4 +186,31 @@ public class CouponControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Cannot delete active coupon"));
     }
+
+    @Test
+    void testApplyCoupon() throws Exception {
+        ApplyCouponRequestDTO request = new ApplyCouponRequestDTO();
+        request.setOriginal_price(100000);
+
+        ApplyCouponResponseDTO response = ApplyCouponResponseDTO.builder()
+                .original_price(100000)
+                .discounted_price(80000)
+                .coupon_code("FIXED-XYZ")
+                .applied(true)
+                .build();
+
+        Mockito.when(couponService.applyCoupon(eq(couponId), eq(100000.0)))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/coupons/" + couponId + "/apply")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.original_price").value(100000))
+                .andExpect(jsonPath("$.discounted_price").value(80000))
+                .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
+                .andExpect(jsonPath("$.applied").value(true));
+    }
+
+
 }
