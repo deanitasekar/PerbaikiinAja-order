@@ -14,137 +14,138 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
+@Async
 public class OrderServiceImpl implements OrderService {
 
-    private final OrderRepository orderRepository;
-
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+    private OrderRepository orderRepository;
+
+    @Override
+    public CompletableFuture<OrderResponseDTO> createOrder(OrderRequestDTO request) {
+        return CompletableFuture.supplyAsync(() -> {
+            Order order = new OrderBuilder()
+                    .setCustomerId(request.getCustomerId())
+                    .setTechnicianId(request.getTechnicianId())
+                    .setItemName(request.getItemName())
+                    .setItemCondition(request.getItemCondition())
+                    .setRepairDetails(request.getRepairDetails())
+                    .setServiceDate(request.getServiceDate())
+                    .setPaymentMethodId(request.getPaymentMethodId())
+                    .setCouponId(request.getCouponId())
+                    .build();
+            Order saved = orderRepository.save(order);
+            return mapToDTO(saved);
+        });
     }
 
     @Override
-    @Async("asyncExecutor")
-    public CompletableFuture<OrderResponseDTO> createOrder(OrderRequestDTO orderRequest) {
-        Order order = new OrderBuilder()
-                .setCustomerId(orderRequest.getCustomerId())
-                .setItemName(orderRequest.getItemName())
-                .setItemCondition(orderRequest.getItemCondition())
-                .setRepairDetails(orderRequest.getRepairDetails())
-                .setServiceDate(orderRequest.getServiceDate())
-                .setPaymentMethodId(orderRequest.getPaymentMethodId())
-                .setCouponId(orderRequest.getCouponId())
-                .build();
-
-        if (orderRequest.getTechnicianId() != null) {
-            order.setTechnicianId(orderRequest.getTechnicianId());
-        }
-
-        Order saved = orderRepository.save(order);
-        return CompletableFuture.completedFuture(convertToDto(saved));
-    }
-
-    @Override
-    @Async("asyncExecutor")
     public CompletableFuture<OrderResponseDTO> getOrderById(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
-        return CompletableFuture.completedFuture(convertToDto(order));
+        return CompletableFuture.supplyAsync(() -> {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+            return mapToDTO(order);
+        });
     }
 
     @Override
-    @Async("asyncExecutor")
     public CompletableFuture<OrderListResponseDTO> getOrdersByCustomerId(UUID customerId) {
-        List<Order> orders = orderRepository.findByCustomerId(customerId);
-        List<OrderResponseDTO> dtos = orders.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        return CompletableFuture.completedFuture(
-                OrderListResponseDTO.builder()
-                        .orders(dtos)
-                        .count(dtos.size())
-                        .build()
-        );
+        return CompletableFuture.supplyAsync(() -> {
+            List<OrderResponseDTO> dtos = orderRepository.findByCustomerId(customerId)
+                    .stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+            return OrderListResponseDTO.builder()
+                    .orders(dtos)
+                    .count(dtos.size())
+                    .build();
+        });
     }
 
     @Override
-    @Async("asyncExecutor")
     public CompletableFuture<List<OrderResponseDTO>> getAll() {
-        List<Order> orders = orderRepository.findAll();
-        List<OrderResponseDTO> dtos = orders.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        return CompletableFuture.completedFuture(dtos);
-    }
-
-    @Override
-    @Async("asyncExecutor")
-    public CompletableFuture<OrderResponseDTO> updateOrder(UUID orderId, UpdateOrderRequestDTO upd) {
-        Order existing = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
-        updateFields(existing, upd);
-        existing.setUpdatedAt(LocalDateTime.now());
-        Order saved = orderRepository.save(existing);
-        return CompletableFuture.completedFuture(convertToDto(saved));
-    }
-
-    @Override
-    @Async("asyncExecutor")
-    public CompletableFuture<ResponseDTO> cancelOrder(UUID orderId) {
-        Order existing = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
-        existing.setStatus(OrderStatus.CANCELLED);
-        existing.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(existing);
-        return CompletableFuture.completedFuture(
-                ResponseDTO.builder()
-                        .success(true)
-                        .message("Order has been successfully cancelled")
-                        .build()
+        return CompletableFuture.supplyAsync(() ->
+                orderRepository.findAll().stream()
+                        .map(this::mapToDTO)
+                        .collect(Collectors.toList())
         );
     }
 
-    private OrderResponseDTO convertToDto(Order order) {
-        return OrderResponseDTO.builder()
-                .id(order.getId())
-                .customerId(order.getCustomerId())
-                .technicianId(order.getTechnicianId())
-                .itemName(order.getItemName())
-                .itemCondition(order.getItemCondition())
-                .repairDetails(order.getRepairDetails())
-                .serviceDate(order.getServiceDate())
-                .status(order.getStatus())
-                .paymentMethodId(order.getPaymentMethodId())
-                .couponId(order.getCouponId())
-                .repairEstimate(order.getRepairEstimate())
-                .repairPrice(order.getRepairPrice())
-                .repairReport(order.getRepairReport())
-                .estimatedCompletionTime(order.getEstimatedCompletionTime())
-                .estimatedPrice(order.getEstimatedPrice())
-                .finalPrice(order.getFinalPrice())
-                .createdAt(order.getCreatedAt())
-                .updatedAt(order.getUpdatedAt())
-                .completedAt(order.getCompletedAt())
-                .build();
+    @Override
+    public CompletableFuture<OrderResponseDTO> updateOrder(UUID orderId, UpdateOrderRequestDTO update) {
+        return CompletableFuture.supplyAsync(() -> {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+
+            boolean changeTech = update.getTechnicianId() != null;
+            boolean changeItem = update.getItemName() != null
+                    || update.getItemCondition() != null
+                    || update.getRepairDetails() != null;
+
+            if ((changeTech || changeItem) && !(order.getStatus() == OrderStatus.PENDING
+                    || order.getStatus() == OrderStatus.WAITING_APPROVAL)) {
+                throw new IllegalStateException(
+                        "Cannot change order when status is " + order.getStatus());
+            }
+
+            updateFields(order, update);
+            Order updated = orderRepository.save(order);
+            return mapToDTO(updated);
+        });
+    }
+
+    @Override
+    public CompletableFuture<ResponseDTO> cancelOrder(UUID orderId) {
+        return CompletableFuture.supplyAsync(() -> {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+            return ResponseDTO.builder()
+                    .success(true)
+                    .message("Order cancelled: " + order.getId())
+                    .build();
+        });
     }
 
     private void updateFields(Order order, UpdateOrderRequestDTO update) {
-        if (update.getItemName() != null) order.setItemName(update.getItemName());
-        if (update.getItemCondition() != null) order.setItemCondition(update.getItemCondition());
-        if (update.getRepairDetails() != null) order.setRepairDetails(update.getRepairDetails());
-        if (update.getServiceDate() != null) order.setServiceDate(update.getServiceDate());
-        if (update.getTechnicianId() != null) order.setTechnicianId(update.getTechnicianId());
-        if (update.getPaymentMethodId() != null) order.setPaymentMethodId(update.getPaymentMethodId());
-        if (update.getCouponId() != null) order.setCouponId(update.getCouponId());
-        if (update.getEstimatedCompletionTime() != null) order.setEstimatedCompletionTime(update.getEstimatedCompletionTime());
+        if (update.getItemName() != null)       order.setItemName(update.getItemName());
+        if (update.getItemCondition() != null)  order.setItemCondition(update.getItemCondition());
+        if (update.getRepairDetails() != null)  order.setRepairDetails(update.getRepairDetails());
+        if (update.getServiceDate() != null)    order.setServiceDate(update.getServiceDate());
+        if (update.getTechnicianId() != null)   order.setTechnicianId(update.getTechnicianId());
+        if (update.getPaymentMethodId() != null)order.setPaymentMethodId(update.getPaymentMethodId());
+        if (update.getCouponId() != null)       order.setCouponId(update.getCouponId());
+        if (update.getEstimatedCompletionTime() != null)
+            order.setEstimatedCompletionTime(update.getEstimatedCompletionTime());
         if (update.getEstimatedPrice() != null) order.setEstimatedPrice(update.getEstimatedPrice());
-        if (update.getFinalPrice() != null) order.setFinalPrice(update  .getFinalPrice());
+        if (update.getFinalPrice() != null)     order.setFinalPrice(update.getFinalPrice());
+        if (update.getCompletedAt() != null)    order.setCompletedAt(update.getCompletedAt());
+    }
+
+    private OrderResponseDTO mapToDTO(Order order) {
+        return new OrderResponseDTO(
+                order.getId(),
+                order.getCustomerId(),
+                order.getTechnicianId(),
+                order.getItemName(),
+                order.getItemCondition(),
+                order.getRepairDetails(),
+                order.getServiceDate(),
+                order.getStatus(),
+                order.getPaymentMethodId(),
+                order.getCouponId(),
+                order.getEstimatedCompletionTime(),
+                order.getEstimatedPrice(),
+                order.getFinalPrice(),
+                order.getCreatedAt(),
+                order.getUpdatedAt(),
+                order.getCompletedAt()
+        );
     }
 }

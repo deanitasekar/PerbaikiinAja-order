@@ -12,25 +12,28 @@ import lombok.Generated;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.util.Date;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
-@Generated
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class Order {
     @Id
     @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name="UUID", strategy="org.hibernate.id.UUIDGenerator")
-    @Column(name="id", updatable=false, nullable=false)
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "customer_id", nullable = false)
+    @Column(name = "customer_id", nullable = false, updatable = false)
     private UUID customerId;
 
     @Column(name = "technician_id")
@@ -48,18 +51,9 @@ public class Order {
     @Column(name = "service_date", nullable = false)
     private Date serviceDate;
 
-    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private OrderStatus status;
-
-    @Column(name = "repair_estimate", columnDefinition = "TEXT")
-    private String repairEstimate;
-
-    @Column(name = "repair_price")
-    private Double repairPrice;
-
-    @Column(name = "repair_report", columnDefinition = "TEXT")
-    private String repairReport;
 
     @Column(name = "payment_method_id")
     private UUID paymentMethodId;
@@ -70,15 +64,17 @@ public class Order {
     @Column(name = "estimated_completion_time")
     private String estimatedCompletionTime;
 
-    @Column(name = "estimated_price")
-    private Double estimatedPrice;
+    @Column(name = "estimated_price", precision = 19, scale = 2)
+    private BigDecimal estimatedPrice;
 
-    @Column(name = "final_price")
-    private Double finalPrice;
+    @Column(name = "final_price", precision = 19, scale = 2)
+    private BigDecimal finalPrice;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
@@ -87,6 +83,7 @@ public class Order {
 
     public Order(OrderBuilder builder) {
         this.customerId = builder.getCustomerId();
+        this.technicianId = builder.getTechnicianId();
         this.itemName = builder.getItemName();
         this.itemCondition = builder.getItemCondition();
         this.repairDetails = builder.getRepairDetails();
@@ -94,7 +91,5 @@ public class Order {
         this.paymentMethodId = builder.getPaymentMethodId();
         this.couponId = builder.getCouponId();
         this.status = OrderStatus.PENDING;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
     }
 }

@@ -1,4 +1,5 @@
 package id.ac.ui.cs.advprog.order.repository;
+
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.model.Order;
 import id.ac.ui.cs.advprog.order.model.OrderBuilder;
@@ -72,12 +73,20 @@ class OrderRepositoryTest {
     void testFindByTechnicianId() {
         List<Order> technicianOrders = orderRepository.findByTechnicianId(technicianId);
         assertEquals(2, technicianOrders.size());
+        assertTrue(technicianOrders.contains(pendingOrder));
+        assertTrue(technicianOrders.contains(completedOrder));
     }
 
     @Test
     void testFindByStatus() {
         List<Order> allPendingOrders = orderRepository.findByStatus(OrderStatus.PENDING);
+        assertEquals(1, allPendingOrders.size());
         assertTrue(allPendingOrders.contains(pendingOrder));
         assertFalse(allPendingOrders.contains(completedOrder));
+
+        List<Order> allCompletedOrders = orderRepository.findByStatus(OrderStatus.COMPLETED);
+        assertEquals(1, allCompletedOrders.size());
+        assertTrue(allCompletedOrders.contains(completedOrder));
+        assertFalse(allCompletedOrders.contains(pendingOrder));
     }
 }

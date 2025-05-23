@@ -1,13 +1,11 @@
 package id.ac.ui.cs.advprog.order.model;
 
-import lombok.Getter;
-
 import java.util.Date;
 import java.util.UUID;
 
-@Getter
 public class OrderBuilder {
     private UUID customerId;
+    private UUID technicianId;
     private String itemName;
     private String itemCondition;
     private String repairDetails;
@@ -17,6 +15,11 @@ public class OrderBuilder {
 
     public OrderBuilder setCustomerId(UUID customerId) {
         this.customerId = customerId;
+        return this;
+    }
+
+    public OrderBuilder setTechnicianId(UUID technicianId) {
+        this.technicianId = technicianId;
         return this;
     }
 
@@ -53,4 +56,13 @@ public class OrderBuilder {
     public Order build() {
         return new Order(this);
     }
+
+    public UUID getCustomerId() { return customerId; }
+    public UUID getTechnicianId() { return technicianId; }
+    public String getItemName() { return itemName; }
+    public String getItemCondition() { return itemCondition; }
+    public String getRepairDetails() { return repairDetails; }
+    public Date getServiceDate() { return serviceDate; }
+    public UUID getPaymentMethodId() { return paymentMethodId; }
+    public UUID getCouponId() { return couponId; }
 }

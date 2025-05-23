@@ -18,11 +18,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,14 +42,13 @@ class OrderServiceImplTest {
     private UpdateOrderRequestDTO updateDto;
     private OrderBuilder orderBuilder;
     private UUID customerId;
-    private UUID paymentMethodId;
     private UUID couponId;
     private Date serviceDate;
 
     @BeforeEach
     void setUp() {
         customerId = UUID.randomUUID();
-        paymentMethodId = UUID.randomUUID();
+        UUID paymentMethodId = UUID.randomUUID();
         couponId = UUID.randomUUID();
         serviceDate = new Date();
 
@@ -60,15 +61,16 @@ class OrderServiceImplTest {
                 .setPaymentMethodId(paymentMethodId)
                 .setCouponId(couponId);
 
-        this.requestDto = OrderRequestDTO.builder()
-                .customerId(customerId)
-                .itemName("MacBook Pro 16-inch M2")
-                .itemCondition("Brand new, still in warranty")
-                .repairDetails("Battery drains rapidly and trackpad is unresponsive")
-                .serviceDate(serviceDate)
-                .paymentMethodId(paymentMethodId)
-                .couponId(couponId)
-                .build();
+        this.requestDto = new OrderRequestDTO(
+                customerId,
+                null,
+                "MacBook Pro 16-inch M2",
+                "Brand new, still in warranty",
+                "Battery drains rapidly and trackpad is unresponsive",
+                serviceDate,
+                paymentMethodId,
+                couponId
+        );
 
         this.updateDto = UpdateOrderRequestDTO.builder()
                 .itemName("Dell XPS 15 9520")
@@ -108,9 +110,10 @@ class OrderServiceImplTest {
         UUID nonExistentOrderId = UUID.randomUUID();
         Mockito.when(orderRepository.findById(nonExistentOrderId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () ->
+        CompletionException ex = assertThrows(CompletionException.class, () ->
                 orderService.getOrderById(nonExistentOrderId).join()
         );
+        assertTrue(ex.getCause() instanceof EntityNotFoundException);
     }
 
     @Test
@@ -129,7 +132,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void testFindAll() throws Exception {
+    void testGetAll() throws Exception {
         Order order1 = orderBuilder.build();
         Order order2 = orderBuilder.setItemName("Samsung Galaxy S23 Ultra").build();
         Mockito.when(orderRepository.findAll()).thenReturn(List.of(order1, order2));
@@ -179,9 +182,10 @@ class OrderServiceImplTest {
         UUID nonExistentOrderId = UUID.randomUUID();
         Mockito.when(orderRepository.findById(nonExistentOrderId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () ->
+        CompletionException ex = assertThrows(CompletionException.class, () ->
                 orderService.updateOrder(nonExistentOrderId, updateDto).join()
         );
+        assertTrue(ex.getCause() instanceof EntityNotFoundException);
     }
 
     @Test
@@ -195,7 +199,7 @@ class OrderServiceImplTest {
         ResponseDTO response = future.get();
 
         assertTrue(response.isSuccess());
-        assertEquals("Order has been successfully cancelled", response.getMessage());
+        assertEquals("Order cancelled: " + orderId, response.getMessage());
         assertEquals(OrderStatus.CANCELLED, existingOrder.getStatus());
     }
 
@@ -204,11 +208,11 @@ class OrderServiceImplTest {
         UUID nonExistentOrderId = UUID.randomUUID();
         Mockito.when(orderRepository.findById(nonExistentOrderId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () ->
+        CompletionException ex = assertThrows(CompletionException.class, () ->
                 orderService.cancelOrder(nonExistentOrderId).join()
         );
+        assertTrue(ex.getCause() instanceof EntityNotFoundException);
     }
-
 
     @Test
     void testUpdateOrder_AllFieldsUpdate() throws Exception {
@@ -221,8 +225,8 @@ class OrderServiceImplTest {
         UUID newCouponId = UUID.randomUUID();
         Date newServiceDate = new Date(123456789L);
         String newEstimatedCompletionTime = "2025-02-15T14:30:00";
-        Double newEstimatedPrice = 275.50;
-        Double newFinalPrice = 320.75;
+        BigDecimal newEstimatedPrice = BigDecimal.valueOf(275.50);
+        BigDecimal newFinalPrice = BigDecimal.valueOf(320.75);
         String newRepairDetails = "Complete logic board replacement and SSD upgrade to 1TB";
 
         UpdateOrderRequestDTO completeUpdateRequest = UpdateOrderRequestDTO.builder()
@@ -239,7 +243,7 @@ class OrderServiceImplTest {
                 .build();
 
         Mockito.when(orderRepository.save(Mockito.any(Order.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0, Order.class));
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         OrderResponseDTO resultDto = orderService.updateOrder(orderId, completeUpdateRequest).get();
 
