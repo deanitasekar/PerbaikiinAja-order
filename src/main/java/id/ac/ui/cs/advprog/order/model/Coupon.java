@@ -54,6 +54,12 @@ public class Coupon {
             code = couponType.name() + "-" + suffix;
         }
     }
+
+    @PreUpdate
+    public void preUpdate() {
+        updated_at = LocalDateTime.now();
+    }
+
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();
         if (discount_amount < 0) return false;
