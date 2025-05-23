@@ -101,11 +101,12 @@ class CouponServiceImplTest {
     @Test
     void deleteCoupon() {
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
-        doNothing().when(repo).deleteById(coupon.getId());
+        when(repo.save(any(Coupon.class))).thenReturn(coupon);
 
         assertDoesNotThrow(() -> service.delete(coupon.getId()));
-        verify(repo).deleteById(coupon.getId());
+        verify(repo).save(any(Coupon.class));
     }
+
 
     @Test
     void deleteNonExistingThrows() {

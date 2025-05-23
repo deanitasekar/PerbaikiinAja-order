@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.order.strategy.CouponStrategy;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,9 +62,10 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public void delete(UUID id) {
-        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
-
-        repo.deleteById(coupon.getId());
+        Coupon coupon = repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
+        coupon.setDeleted_at(LocalDateTime.now());
+        repo.save(coupon);
     }
 
     @Override
