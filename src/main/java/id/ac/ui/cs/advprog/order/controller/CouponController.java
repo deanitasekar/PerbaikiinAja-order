@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/coupons")
@@ -64,13 +65,14 @@ public class CouponController {
     }
 
     @PostMapping("/{id}/apply")
-    public ResponseEntity<ApplyCouponResponseDTO> applyCoupon(
+    public CompletableFuture<ResponseEntity<ApplyCouponResponseDTO>> applyCoupon(
             @PathVariable UUID id,
             @Valid @RequestBody ApplyCouponRequestDTO request) {
 
-        ApplyCouponResponseDTO response = couponService.applyCoupon(id, request.getOriginal_price());
-        return ResponseEntity.ok(response);
+        return couponService.applyCoupon(id, request.getOriginal_price())
+                .thenApply(ResponseEntity::ok);
     }
+
 
 
     @ExceptionHandler(IllegalStateException.class)
@@ -94,12 +96,11 @@ public class CouponController {
     }
 
     @PostMapping("/{id}/preview")
-    public ResponseEntity<ApplyCouponResponseDTO> previewCoupon(
+    public CompletableFuture<ResponseEntity<ApplyCouponResponseDTO>> previewCoupon(
             @PathVariable UUID id,
             @Valid @RequestBody ApplyCouponRequestDTO request) {
 
-        ApplyCouponResponseDTO response = couponService.previewCoupon(id, request.getOriginal_price());
-        return ResponseEntity.ok(response);
+        return couponService.previewCoupon(id, request.getOriginal_price())
+                .thenApply(ResponseEntity::ok);
     }
-
 }
