@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test:6.0.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation ("jakarta.persistence:jakarta.persistence-api:3.1.0")
 
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
@@ -45,6 +46,10 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation ("org.hibernate.validator:hibernate-validator:8.0.1.Final")
+    implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
 }
 
 tasks.register<Test>("unitTest") {
