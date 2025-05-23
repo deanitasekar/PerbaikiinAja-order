@@ -6,15 +6,15 @@ import id.ac.ui.cs.advprog.order.dto.OrderResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.OrderListResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.ResponseDTO;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface OrderService {
-    OrderResponseDTO createOrder(OrderRequestDTO orderRequest);
-
-    OrderResponseDTO getOrderById(UUID orderId);
-    OrderListResponseDTO getOrdersByCustomerId(UUID customerId);
-
-    OrderResponseDTO updateOrder(UUID orderId, UpdateOrderRequestDTO updateOrderRequest);
-
-    ResponseDTO cancelOrder(UUID orderId);
+    CompletableFuture<OrderResponseDTO> createOrder(OrderRequestDTO orderRequest);
+    CompletableFuture<OrderResponseDTO> getOrderById(UUID orderId);
+    CompletableFuture<OrderListResponseDTO> getOrdersByCustomerId(UUID customerId);
+    CompletableFuture<List<OrderResponseDTO>> getAll();
+    CompletableFuture<OrderResponseDTO> updateOrder(UUID orderId, UpdateOrderRequestDTO updateRequest);
+    CompletableFuture<ResponseDTO> cancelOrder(UUID orderId);
 }
