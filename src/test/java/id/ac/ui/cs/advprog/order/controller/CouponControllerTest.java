@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -232,7 +233,7 @@ public class CouponControllerTest {
                 .build();
 
         Mockito.when(couponService.applyCoupon(eq(couponId), eq(100000.0)))
-                .thenReturn(response);
+                .thenReturn(CompletableFuture.completedFuture(response));
 
         mockMvc.perform(post("/coupons/" + couponId + "/apply")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -257,7 +258,7 @@ public class CouponControllerTest {
                 .build();
 
         Mockito.when(couponService.previewCoupon(eq(couponId), eq(100000.0)))
-                .thenReturn(response);
+                .thenReturn(CompletableFuture.completedFuture(response));
 
         mockMvc.perform(post("/coupons/" + couponId + "/preview")
                         .contentType(MediaType.APPLICATION_JSON)
