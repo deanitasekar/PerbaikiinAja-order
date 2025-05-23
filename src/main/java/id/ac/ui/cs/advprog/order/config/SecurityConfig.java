@@ -18,7 +18,6 @@ import java.util.Arrays;
 @Configuration
 @EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = true)
 public class SecurityConfig {
-
     @Value("${CORS_ALLOWED_ORIGIN}")
     private String allowedOrigin;
 

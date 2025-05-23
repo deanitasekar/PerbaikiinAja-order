@@ -128,18 +128,21 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/app
-
+            
+            # Rename JAR file if it exists (assuming only one JAR exists)
             if ls *.jar 1> /dev/null 2>&1; then
               mv *.jar app.jar
             fi
-
+            
+            # Install Docker if not installed
             if ! command -v docker &> /dev/null; then
               sudo apt update -y
               sudo apt install -y docker.io
               sudo systemctl start docker
               sudo usermod -aG docker ubuntu
             fi
-
+            
+            # Create .env file with deployment configuration
             cat <<EOF > .env
             CORS_ALLOWED_ORIGIN=${{ secrets.CORS_ALLOWED_ORIGIN }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
@@ -147,7 +150,8 @@ jobs:
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             EOF
-
+            
+            # Deploy using Docker commands
             mv build/libs/*.jar app.jar || true
             sudo docker stop springboot-app || true
             sudo docker rm springboot-app || true
