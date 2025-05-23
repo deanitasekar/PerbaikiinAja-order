@@ -18,7 +18,6 @@ public class CouponTest {
         coupon.setDeleted_at(null);
         coupon.setCreated_at(LocalDateTime.of(2025, 4, 1, 12, 0));
         coupon.setUpdated_at(LocalDateTime.of(2025, 4, 5, 12, 0));
-        coupon.setCreated_by(UUID.randomUUID());
 
 //        assertTrue(coupon.getCode().matches("FIXED-[A-Z0-9]{3}"));
         assertEquals(CouponType.FIXED, coupon.getCouponType());
@@ -31,7 +30,6 @@ public class CouponTest {
         assertNull(coupon.getDeleted_at());
         assertEquals(LocalDateTime.of(2025, 4, 1, 12, 0), coupon.getCreated_at());
         assertEquals(LocalDateTime.of(2025, 4, 5, 12, 0), coupon.getUpdated_at());
-        assertNotNull(coupon.getCreated_by());
     }
 
 
@@ -146,7 +144,6 @@ public class CouponTest {
         assertNull(coupon.getEnd_date(), "End_date should be null by default");
         assertNull(coupon.getDeleted_at(), "Deleted_at should be null by default");
         assertNull(coupon.getUpdated_at(), "Updated_at should be null by default");
-        assertNull(coupon.getCreated_by(), "Created_by should be null by default");
     }
 
 

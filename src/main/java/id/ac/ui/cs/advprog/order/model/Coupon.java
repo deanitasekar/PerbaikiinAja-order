@@ -36,7 +36,7 @@ public class Coupon {
     private LocalDateTime deleted_at;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
-    private UUID created_by;
+//    private UUID created_by;
     public Coupon(CouponType couponType, double discount_amount, int max_usage) {
         this.couponType = couponType;
         this.discount_amount = discount_amount;
