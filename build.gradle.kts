@@ -24,19 +24,17 @@ repositories {
     mavenCentral()
 }
 
-
-// for testing
 val seleniumJavaVersion = "4.14.1"
 val seleniumJupiterVersion = "5.0.1"
 val webdrivermanagerVersion = "5.6.3"
 val junitJupiterVersion = "5.9.1"
-
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
     testImplementation("org.springframework.security:spring-security-test:6.0.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
@@ -51,23 +49,10 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    //for testing
-    testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumJavaVersion")
-    testImplementation("io.github.bonigarcia:selenium-jupiter:$seleniumJupiterVersion")
-    testImplementation("io.github.bonigarcia:webdrivermanager:$webdrivermanagerVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
-
 
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation ("org.hibernate.validator:hibernate-validator:8.0.1.Final")
-    implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+    implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
+    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 }
 
 tasks.register<Test>("unitTest") {
