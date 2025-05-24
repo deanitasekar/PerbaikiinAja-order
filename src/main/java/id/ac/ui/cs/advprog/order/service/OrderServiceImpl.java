@@ -68,12 +68,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public CompletableFuture<List<OrderResponseDTO>> getAll() {
-        return CompletableFuture.supplyAsync(() ->
-                orderRepository.findAll().stream()
-                        .map(this::mapToDTO)
-                        .collect(Collectors.toList())
-        );
+    public CompletableFuture<OrderListResponseDTO> getAllOrders() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<OrderResponseDTO> dtos = orderRepository.findAll()
+                    .stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+
+            return OrderListResponseDTO.builder()
+                    .orders(dtos)
+                    .count(dtos.size())
+                    .build();
+        });
     }
 
     @Override

@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.order.controller;
 
+import id.ac.ui.cs.advprog.order.dto.OrderListResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.OrderRequestDTO;
 import id.ac.ui.cs.advprog.order.dto.UpdateOrderRequestDTO;
 import id.ac.ui.cs.advprog.order.service.OrderService;
@@ -32,12 +33,17 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    private static final String MESSAGE_KEY = "message";
+    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "Something went wrong with the server";
+    private static final String FORBIDDEN_MESSAGE = "You are not authorized to access this resource";
+
+
     @Autowired
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
 
-    private UUID extractCustomerId(Authentication authentication) {
+    private UUID extractUserId(Authentication authentication) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof String) {
             return UUID.fromString((String) principal);
@@ -48,11 +54,12 @@ public class OrderController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> createOrder(
             @RequestBody OrderRequestDTO orderRequest,
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         orderRequest.setCustomerId(customerId);
 
         return orderService.createOrder(orderRequest)
@@ -65,10 +72,11 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> getOrderHistory(
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         return orderService.getOrdersByCustomerId(customerId)
                 .thenApply(orderList -> {
                     Map<String, Object> response = new HashMap<>();
@@ -80,11 +88,12 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
+    @PreAuthorize("hasRole('USER')")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> getOrderDetail(
             @PathVariable UUID orderId,
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         return orderService.getOrderById(orderId)
                 .thenApply(orderResponse -> {
                     if (!orderResponse.getCustomerId().equals(customerId)) {
@@ -98,12 +107,13 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}")
+    @PreAuthorize("hasRole('USER')")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> updateOrder(
             @PathVariable UUID orderId,
             @RequestBody UpdateOrderRequestDTO updateRequest,
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         return orderService.getOrderById(orderId)
                 .thenCompose(existingOrder -> {
                     if (!existingOrder.getCustomerId().equals(customerId)) {
@@ -121,11 +131,12 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('USER')")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> cancelOrder(
             @PathVariable UUID orderId,
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         return orderService.getOrderById(orderId)
                 .thenCompose(existingOrder -> {
                     if (!existingOrder.getCustomerId().equals(customerId)) {
@@ -141,9 +152,23 @@ public class OrderController {
                 });
     }
 
-    private static final String MESSAGE_KEY = "message";
-    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "Something went wrong with the server";
-    private static final String FORBIDDEN_MESSAGE = "You are not authorized to access this resource";
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> getAllOrdersAdmin(
+            Authentication authentication) {
+        UUID adminId = extractUserId(authentication);
+        return orderService.getAllOrders()
+                .thenApply(orderList -> ResponseEntity.ok(buildListResponse(orderList,
+                        "All orders retrieved successfully by admin " + adminId)));
+    }
+
+    private Map<String, Object> buildListResponse(OrderListResponseDTO orderList, String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("orders", orderList.getOrders());
+        response.put("count", orderList.getCount());
+        response.put(MESSAGE_KEY, message);
+        return response;
+    }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {

@@ -14,7 +14,7 @@ public interface OrderService {
     CompletableFuture<OrderResponseDTO> createOrder(OrderRequestDTO orderRequest);
     CompletableFuture<OrderResponseDTO> getOrderById(UUID orderId);
     CompletableFuture<OrderListResponseDTO> getOrdersByCustomerId(UUID customerId);
-    CompletableFuture<List<OrderResponseDTO>> getAll();
+    CompletableFuture<OrderListResponseDTO> getAllOrders();
     CompletableFuture<OrderResponseDTO> updateOrder(UUID orderId, UpdateOrderRequestDTO updateRequest);
     CompletableFuture<ResponseDTO> cancelOrder(UUID orderId);
 }
