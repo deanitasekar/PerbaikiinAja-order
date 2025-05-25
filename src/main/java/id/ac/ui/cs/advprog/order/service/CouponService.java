@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.order.dto.*;
 import id.ac.ui.cs.advprog.order.enums.CouponType;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface CouponService {
     CouponResponseDTO create(CreateCouponRequestDTO request);
@@ -13,8 +14,8 @@ public interface CouponService {
     CouponListResponseDTO findAllValid();
     CouponListResponseDTO findByCouponType(CouponType type);
     CouponResponseDTO findByCode(String code);
-    ApplyCouponResponseDTO applyCoupon(UUID id, double price);
+    CompletableFuture<ApplyCouponResponseDTO> applyCoupon(UUID id, double price);
     CouponResponseDTO findById(UUID id);
-    ApplyCouponResponseDTO previewCoupon(UUID id, double price);
+    CompletableFuture<ApplyCouponResponseDTO> previewCoupon(UUID id,double price);
 
 }

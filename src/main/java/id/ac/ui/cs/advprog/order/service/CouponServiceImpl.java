@@ -7,11 +7,13 @@ import id.ac.ui.cs.advprog.order.model.Coupon;
 import id.ac.ui.cs.advprog.order.repository.CouponRepository;
 import id.ac.ui.cs.advprog.order.strategy.CouponStrategy;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -135,57 +137,46 @@ public class CouponServiceImpl implements CouponService {
                 .build();
     }
 
+    @Async("asyncExecutor")
     @Override
-    public ApplyCouponResponseDTO applyCoupon(UUID id, double price) {
+    public CompletableFuture<ApplyCouponResponseDTO> applyCoupon(UUID id, double price){
+        return CompletableFuture.completedFuture(calc(id,price,true));
+    }
+
+    @Async("asyncExecutor")
+    @Override
+    public CompletableFuture<ApplyCouponResponseDTO> previewCoupon(UUID id,double price){
+        return CompletableFuture.completedFuture(calc(id,price,false));
+    }
+
+    private ApplyCouponResponseDTO calc(UUID id, double price, boolean increment) {
         Coupon coupon = repo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
         if (!coupon.isValid()) {
             return ApplyCouponResponseDTO.builder()
+                    .id(coupon.getId())
                     .original_price(price)
                     .discounted_price(price)
                     .coupon_code(coupon.getCode())
                     .valid(false)
                     .build();
         }
-
-        CouponType type = coupon.getCouponType();
-        if (type == null) throw new IllegalArgumentException("Coupon type is null");
 
         CouponStrategy strategy = strategyFactory.getStrategy(coupon.getCouponType());
-        double discounted = strategy.apply(price, coupon.getDiscount_amount());
-
-        coupon.incrementUsage();
-        repo.save(coupon);
-
-        return ApplyCouponResponseDTO.builder()
-                .original_price(price)
-                .discounted_price(discounted)
-                .coupon_code(coupon.getCode())
-                .valid(true)
-                .build();
-    }
-
-    @Override
-    public ApplyCouponResponseDTO previewCoupon(UUID id, double price) {
-        Coupon coupon = repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
-
-        if (!coupon.isValid()) {
-            return ApplyCouponResponseDTO.builder()
-                    .original_price(price)
-                    .discounted_price(price)
-                    .coupon_code(coupon.getCode())
-                    .valid(false)
-                    .build();
+        if (strategy == null) {
+            throw new IllegalArgumentException("Unknown coupon type: " + coupon.getCouponType());
         }
 
-        CouponType type = coupon.getCouponType();
-        if (type == null) throw new IllegalArgumentException("Coupon type is null");
-
-        CouponStrategy strategy = strategyFactory.getStrategy(type);
         double discounted = strategy.apply(price, coupon.getDiscount_amount());
 
+        if (increment) {
+            coupon.incrementUsage();
+            repo.save(coupon);
+        }
+
         return ApplyCouponResponseDTO.builder()
+                .id(coupon.getId())
                 .original_price(price)
                 .discounted_price(discounted)
                 .coupon_code(coupon.getCode())
