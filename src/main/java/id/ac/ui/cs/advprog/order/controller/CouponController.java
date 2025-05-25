@@ -65,6 +65,7 @@ public class CouponController {
     }
 
     @PostMapping("/{id}/apply")
+    @ResponseBody
     public CompletableFuture<ResponseEntity<ApplyCouponResponseDTO>> applyCoupon(
             @PathVariable UUID id,
             @Valid @RequestBody ApplyCouponRequestDTO request) {

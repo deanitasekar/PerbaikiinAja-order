@@ -149,13 +149,37 @@ public class CouponServiceImpl implements CouponService {
         return CompletableFuture.completedFuture(calc(id,price,false));
     }
 
-    private ApplyCouponResponseDTO calc(UUID id,double price,boolean increment){
-        Coupon c=repo.findById(id).orElseThrow(()->new EntityNotFoundException("Coupon not found"));
-        if(!c.isValid())return ApplyCouponResponseDTO.builder().original_price(price).discounted_price(price).coupon_code(c.getCode()).valid(false).build();
-        CouponStrategy s=strategyFactory.getStrategy(c.getCouponType());
-        double disc=s.apply(price,c.getDiscount_amount());
-        if(increment){c.incrementUsage();repo.save(c);}
-        return ApplyCouponResponseDTO.builder().original_price(price).discounted_price(disc).coupon_code(c.getCode()).valid(true).build();
+    private ApplyCouponResponseDTO calc(UUID id, double price, boolean increment) {
+        Coupon coupon = repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
+
+        if (!coupon.isValid()) {
+            return ApplyCouponResponseDTO.builder()
+                    .original_price(price)
+                    .discounted_price(price)
+                    .coupon_code(coupon.getCode())
+                    .valid(false)
+                    .build();
+        }
+
+        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getCouponType());
+        if (strategy == null) {
+            throw new IllegalArgumentException("Unknown coupon type: " + coupon.getCouponType());
+        }
+
+        double discounted = strategy.apply(price, coupon.getDiscount_amount());
+
+        if (increment) {
+            coupon.incrementUsage();
+            repo.save(coupon);
+        }
+
+        return ApplyCouponResponseDTO.builder()
+                .original_price(price)
+                .discounted_price(discounted)
+                .coupon_code(coupon.getCode())
+                .valid(true)
+                .build();
     }
 
 

@@ -15,6 +15,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
@@ -225,7 +228,7 @@ public class CouponControllerTest {
         ApplyCouponRequestDTO request = new ApplyCouponRequestDTO();
         request.setOriginal_price(100000);
 
-        ApplyCouponResponseDTO response = ApplyCouponResponseDTO.builder()
+        ApplyCouponResponseDTO responseDto = ApplyCouponResponseDTO.builder()
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
@@ -233,12 +236,18 @@ public class CouponControllerTest {
                 .build();
 
         Mockito.when(couponService.applyCoupon(eq(couponId), eq(100000.0)))
-                .thenReturn(CompletableFuture.completedFuture(response));
+                .thenReturn(CompletableFuture.completedFuture(responseDto));
 
-        mockMvc.perform(post("/coupons/" + couponId + "/apply")
+        MvcResult mvcResult = mockMvc.perform(post("/coupons/" + couponId + "/apply")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
@@ -250,7 +259,7 @@ public class CouponControllerTest {
         ApplyCouponRequestDTO request = new ApplyCouponRequestDTO();
         request.setOriginal_price(100000);
 
-        ApplyCouponResponseDTO response = ApplyCouponResponseDTO.builder()
+        ApplyCouponResponseDTO responseDto = ApplyCouponResponseDTO.builder()
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
@@ -258,12 +267,18 @@ public class CouponControllerTest {
                 .build();
 
         Mockito.when(couponService.previewCoupon(eq(couponId), eq(100000.0)))
-                .thenReturn(CompletableFuture.completedFuture(response));
+                .thenReturn(CompletableFuture.completedFuture(responseDto));
 
-        mockMvc.perform(post("/coupons/" + couponId + "/preview")
+        MvcResult mvcResult = mockMvc.perform(post("/coupons/" + couponId + "/preview")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
