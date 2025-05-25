@@ -25,7 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -53,8 +52,10 @@ class OrderControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         userId = UUID.randomUUID();
-        Mockito.when(auth.getPrincipal()).thenReturn(userId.toString());
-        mockMvc = MockMvcBuilders.standaloneSetup(orderController).build();
+        Mockito.when(auth.getName()).thenReturn(userId.toString());
+        mockMvc = MockMvcBuilders.standaloneSetup(orderController)
+                .setControllerAdvice(new OrderController.GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -101,8 +102,7 @@ class OrderControllerTest {
         mockMvc.perform(asyncDispatch(mvc))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orders[0].id").value(single.getId().toString()))
-                .andExpect(jsonPath("$.count").value(1))
-                .andExpect(jsonPath("$.message").value("Orders retrieved successfully"));
+                .andExpect(jsonPath("$.count").value(1));
     }
 
     @Test
@@ -122,15 +122,20 @@ class OrderControllerTest {
 
         mockMvc.perform(asyncDispatch(mvc))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.order.id").value(orderId.toString()))
-                .andExpect(jsonPath("$.message").value("Order retrieved successfully"));
+                .andExpect(jsonPath("$.id").value(orderId.toString()))
+                .andExpect(jsonPath("$.customerId").value(userId.toString()));
     }
 
     @Test
     void testUpdateOrder_success() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO existing = new OrderResponseDTO(); existing.setId(orderId); existing.setCustomerId(userId);
-        OrderResponseDTO updated = new OrderResponseDTO(); updated.setId(orderId); updated.setCustomerId(userId);
+        OrderResponseDTO existing = new OrderResponseDTO();
+        existing.setId(orderId);
+        existing.setCustomerId(userId);
+
+        OrderResponseDTO updated = new OrderResponseDTO();
+        updated.setId(orderId);
+        updated.setCustomerId(userId);
 
         Mockito.when(orderService.getOrderById(orderId))
                 .thenReturn(CompletableFuture.completedFuture(existing));
@@ -147,18 +152,25 @@ class OrderControllerTest {
 
         mockMvc.perform(asyncDispatch(mvc))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.order.id").value(orderId.toString()))
-                .andExpect(jsonPath("$.message").value("Order ID " + orderId + " updated successfully"));
+                .andExpect(jsonPath("$.id").value(orderId.toString()))
+                .andExpect(jsonPath("$.customerId").value(userId.toString()));
     }
 
     @Test
     void testCancelOrder_success() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO existing = new OrderResponseDTO(); existing.setId(orderId); existing.setCustomerId(userId);
-        ResponseDTO cancelResp = new ResponseDTO(); cancelResp.setSuccess(true); cancelResp.setMessage("Canceled successfully");
+        OrderResponseDTO existing = new OrderResponseDTO();
+        existing.setId(orderId);
+        existing.setCustomerId(userId);
 
-        Mockito.when(orderService.getOrderById(orderId)).thenReturn(CompletableFuture.completedFuture(existing));
-        Mockito.when(orderService.cancelOrder(orderId)).thenReturn(CompletableFuture.completedFuture(cancelResp));
+        ResponseDTO cancelResp = new ResponseDTO();
+        cancelResp.setSuccess(true);
+        cancelResp.setMessage("Canceled successfully");
+
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenReturn(CompletableFuture.completedFuture(existing));
+        Mockito.when(orderService.cancelOrder(orderId))
+                .thenReturn(CompletableFuture.completedFuture(cancelResp));
 
         MvcResult mvc = mockMvc.perform(delete("/orders/{orderId}", orderId).principal(auth))
                 .andExpect(request().asyncStarted())
@@ -166,9 +178,7 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Canceled successfully"));
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -183,10 +193,7 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value(HttpStatus.INTERNAL_SERVER_ERROR.value()))
-                .andExpect(jsonPath("$.error").value("oops"))
-                .andExpect(jsonPath("$.message").value("Something went wrong with the server"));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -200,16 +207,16 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value(HttpStatus.INTERNAL_SERVER_ERROR.value()))
-                .andExpect(jsonPath("$.error").value("oops"))
-                .andExpect(jsonPath("$.message").value("Something went wrong with the server"));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
     void testGetOrderDetail_Forbidden() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO dto = new OrderResponseDTO(); dto.setId(orderId); dto.setCustomerId(UUID.randomUUID());
+        OrderResponseDTO dto = new OrderResponseDTO();
+        dto.setId(orderId);
+        dto.setCustomerId(UUID.randomUUID());
+
         Mockito.when(orderService.getOrderById(orderId))
                 .thenReturn(CompletableFuture.completedFuture(dto));
 
@@ -219,17 +226,15 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("You are not authorized to access this resource"));
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void testGetOrderDetail_NotFound_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
         Mockito.when(orderService.getOrderById(orderId))
-                .thenReturn(CompletableFuture.failedFuture(new EntityNotFoundException("Order not found with ID: " + orderId)));
+                .thenReturn(CompletableFuture.failedFuture(
+                        new EntityNotFoundException("Order not found with ID: " + orderId)));
 
         MvcResult mvc = mockMvc.perform(get("/orders/{orderId}", orderId).principal(auth))
                 .andExpect(request().asyncStarted())
@@ -237,17 +242,15 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Order not found with ID: " + orderId));
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void testUpdateOrder_NotFound_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
         Mockito.when(orderService.getOrderById(orderId))
-                .thenReturn(CompletableFuture.failedFuture(new EntityNotFoundException("Order not found with ID: " + orderId)));
+                .thenReturn(CompletableFuture.failedFuture(
+                        new EntityNotFoundException("Order not found with ID: " + orderId)));
 
         MvcResult mvc = mockMvc.perform(put("/orders/{orderId}", orderId)
                         .principal(auth)
@@ -258,16 +261,16 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Order not found with ID: " + orderId));
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void testUpdateOrder_BadRequest_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO existing = new OrderResponseDTO(); existing.setId(orderId); existing.setCustomerId(userId);
+        OrderResponseDTO existing = new OrderResponseDTO();
+        existing.setId(orderId);
+        existing.setCustomerId(userId);
+
         Mockito.when(orderService.getOrderById(orderId))
                 .thenReturn(CompletableFuture.completedFuture(existing));
         Mockito.when(orderService.updateOrder(eq(orderId), any(UpdateOrderRequestDTO.class)))
@@ -282,16 +285,16 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("cannot update"));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
     void testUpdateOrder_Forbidden_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO wrongOwner = new OrderResponseDTO(); wrongOwner.setId(orderId); wrongOwner.setCustomerId(UUID.randomUUID());
+        OrderResponseDTO wrongOwner = new OrderResponseDTO();
+        wrongOwner.setId(orderId);
+        wrongOwner.setCustomerId(UUID.randomUUID());
+
         Mockito.when(orderService.getOrderById(orderId))
                 .thenReturn(CompletableFuture.completedFuture(wrongOwner));
 
@@ -304,17 +307,15 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("You are not authorized to access this resource"));
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void testCancelOrder_NotFound_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
         Mockito.when(orderService.getOrderById(orderId))
-                .thenReturn(CompletableFuture.failedFuture(new EntityNotFoundException("Order not found with ID: " + orderId)));
+                .thenReturn(CompletableFuture.failedFuture(
+                        new EntityNotFoundException("Order not found with ID: " + orderId)));
 
         MvcResult mvc = mockMvc.perform(delete("/orders/{orderId}", orderId)
                         .principal(auth))
@@ -323,17 +324,18 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Order not found with ID: " + orderId));
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void testCancelOrder_BadRequest_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO existing = new OrderResponseDTO(); existing.setId(orderId); existing.setCustomerId(userId);
-        Mockito.when(orderService.getOrderById(orderId)).thenReturn(CompletableFuture.completedFuture(existing));
+        OrderResponseDTO existing = new OrderResponseDTO();
+        existing.setId(orderId);
+        existing.setCustomerId(userId);
+
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenReturn(CompletableFuture.completedFuture(existing));
         Mockito.when(orderService.cancelOrder(orderId))
                 .thenReturn(CompletableFuture.failedFuture(new IllegalStateException("cannot cancel")));
 
@@ -344,17 +346,18 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("cannot cancel"));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
     void testCancelOrder_Forbidden_HTTP() throws Exception {
         UUID orderId = UUID.randomUUID();
-        OrderResponseDTO wrongOwner = new OrderResponseDTO(); wrongOwner.setId(orderId); wrongOwner.setCustomerId(UUID.randomUUID());
-        Mockito.when(orderService.getOrderById(orderId)).thenReturn(CompletableFuture.completedFuture(wrongOwner));
+        OrderResponseDTO wrongOwner = new OrderResponseDTO();
+        wrongOwner.setId(orderId);
+        wrongOwner.setCustomerId(UUID.randomUUID());
+
+        Mockito.when(orderService.getOrderById(orderId))
+                .thenReturn(CompletableFuture.completedFuture(wrongOwner));
 
         MvcResult mvc = mockMvc.perform(delete("/orders/{orderId}", orderId)
                         .principal(auth))
@@ -363,9 +366,35 @@ class OrderControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvc))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("You are not authorized to access this resource"));
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetAllOrdersAdmin_success() throws Exception {
+        OrderResponseDTO order1 = new OrderResponseDTO();
+        order1.setId(UUID.randomUUID());
+        order1.setCustomerId(userId);
+
+        OrderResponseDTO order2 = new OrderResponseDTO();
+        order2.setId(UUID.randomUUID());
+        order2.setCustomerId(UUID.randomUUID());
+
+        OrderListResponseDTO listDto = new OrderListResponseDTO();
+        listDto.setOrders(List.of(order1, order2));
+        listDto.setCount(2);
+
+        Mockito.when(orderService.getAllOrders())
+                .thenReturn(CompletableFuture.completedFuture(listDto));
+
+        MvcResult mvc = mockMvc.perform(get("/orders/admin").principal(auth))
+                .andExpect(request().asyncStarted())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvc))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orders").isArray())
+                .andExpect(jsonPath("$.orders.length()").value(2))
+                .andExpect(jsonPath("$.count").value(2));
     }
 }

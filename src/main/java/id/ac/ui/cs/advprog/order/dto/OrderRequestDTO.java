@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.order.dto;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,7 +32,7 @@ public class OrderRequestDTO {
     private String repairDetails;
 
     @NotNull(message = "Service date is required")
-    @Future(message = "Service date must be in the future")
+    @FutureOrPresent(message = "Service date must be in the future or present")
     private Date serviceDate;
 
     @NotNull

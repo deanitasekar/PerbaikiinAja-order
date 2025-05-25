@@ -1,15 +1,19 @@
 package id.ac.ui.cs.advprog.order.controller;
 
+import id.ac.ui.cs.advprog.order.dto.OrderListResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.OrderRequestDTO;
+import id.ac.ui.cs.advprog.order.dto.OrderResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.UpdateOrderRequestDTO;
 import id.ac.ui.cs.advprog.order.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,143 +36,121 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    private static final String FORBIDDEN = "Forbidden";
+
+
     @Autowired
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
 
-    private UUID extractCustomerId(Authentication authentication) {
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof String) {
-            return UUID.fromString((String) principal);
-        } else if (principal instanceof User) {
-            return UUID.fromString(((User) principal).getUsername());
-        }
-        throw new IllegalStateException("Unexpected principal type");
+    private UUID extractUserId(Authentication auth) {
+        return UUID.fromString(auth.getName());
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public CompletableFuture<ResponseEntity<Map<String, Object>>> createOrder(
             @RequestBody OrderRequestDTO orderRequest,
             Authentication authentication) {
 
-        UUID customerId = extractCustomerId(authentication);
+        UUID customerId = extractUserId(authentication);
         orderRequest.setCustomerId(customerId);
 
         return orderService.createOrder(orderRequest)
                 .thenApply(orderResponse -> {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("order", orderResponse);
-                    response.put(MESSAGE_KEY, "Order created successfully");
-                    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+                    Map<String, Object> body = new HashMap<>();
+                    body.put("order", orderResponse);
+                    body.put("message", "Order created successfully");
+                    return ResponseEntity
+                            .status(HttpStatus.CREATED)
+                            .body(body);
                 });
     }
 
     @GetMapping
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> getOrderHistory(
-            Authentication authentication) {
-
-        UUID customerId = extractCustomerId(authentication);
+    @PreAuthorize("hasRole('USER')")
+    public CompletableFuture<ResponseEntity<OrderListResponseDTO>> getOrderHistory(
+            Authentication auth) {
+        UUID customerId = extractUserId(auth);
         return orderService.getOrdersByCustomerId(customerId)
-                .thenApply(orderList -> {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("orders", orderList.getOrders());
-                    response.put("count", orderList.getCount());
-                    response.put(MESSAGE_KEY, "Orders retrieved successfully");
-                    return ResponseEntity.ok(response);
-                });
+                .thenApply(ResponseEntity::ok);
     }
 
     @GetMapping("/{orderId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> getOrderDetail(
+    @PreAuthorize("hasRole('USER')")
+    public CompletableFuture<ResponseEntity<OrderResponseDTO>> getOrderDetail(
             @PathVariable UUID orderId,
-            Authentication authentication) {
+            Authentication auth) {
+        UUID customerId = extractUserId(auth);
 
-        UUID customerId = extractCustomerId(authentication);
         return orderService.getOrderById(orderId)
-                .thenApply(orderResponse -> {
-                    if (!orderResponse.getCustomerId().equals(customerId)) {
-                        throw new IllegalStateException(FORBIDDEN_MESSAGE);
+                .thenApply(dto -> {
+                    if (!dto.getCustomerId().equals(customerId)) {
+                        throw new AccessDeniedException(FORBIDDEN);
                     }
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("order", orderResponse);
-                    response.put(MESSAGE_KEY, "Order retrieved successfully");
-                    return ResponseEntity.ok(response);
+                    return ResponseEntity.ok(dto);
                 });
     }
 
     @PutMapping("/{orderId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> updateOrder(
+    @PreAuthorize("hasRole('USER')")
+    public CompletableFuture<ResponseEntity<OrderResponseDTO>> updateOrder(
             @PathVariable UUID orderId,
-            @RequestBody UpdateOrderRequestDTO updateRequest,
-            Authentication authentication) {
+            @RequestBody @Valid UpdateOrderRequestDTO request,
+            Authentication auth) {
+        UUID customerId = extractUserId(auth);
 
-        UUID customerId = extractCustomerId(authentication);
         return orderService.getOrderById(orderId)
-                .thenCompose(existingOrder -> {
-                    if (!existingOrder.getCustomerId().equals(customerId)) {
-                        throw new IllegalStateException(FORBIDDEN_MESSAGE);
+                .thenCompose(dto -> {
+                    if (!dto.getCustomerId().equals(customerId)) {
+                        throw new AccessDeniedException(FORBIDDEN);
                     }
-                    return orderService.updateOrder(orderId, updateRequest);
+                    return orderService.updateOrder(orderId, request);
                 })
-                .thenApply(updatedOrder -> {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("order", updatedOrder);
-                    response.put(MESSAGE_KEY,
-                            "Order ID " + updatedOrder.getId() + " updated successfully");
-                    return ResponseEntity.ok(response);
-                });
+                .thenApply(ResponseEntity::ok);
     }
-
     @DeleteMapping("/{orderId}")
-    public CompletableFuture<ResponseEntity<Map<String, Object>>> cancelOrder(
+    @PreAuthorize("hasRole('USER')")
+    public CompletableFuture<ResponseEntity<Void>> cancelOrder(
             @PathVariable UUID orderId,
-            Authentication authentication) {
+            Authentication auth) {
+        UUID customerId = extractUserId(auth);
 
-        UUID customerId = extractCustomerId(authentication);
         return orderService.getOrderById(orderId)
-                .thenCompose(existingOrder -> {
-                    if (!existingOrder.getCustomerId().equals(customerId)) {
-                        throw new IllegalStateException(FORBIDDEN_MESSAGE);
+                .thenCompose(dto -> {
+                    if (!dto.getCustomerId().equals(customerId)) {
+                        throw new AccessDeniedException(FORBIDDEN);
                     }
                     return orderService.cancelOrder(orderId);
                 })
-                .thenApply(cancelResponse -> {
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("success", cancelResponse.isSuccess());
-                    response.put(MESSAGE_KEY, cancelResponse.getMessage());
-                    return ResponseEntity.ok(response);
-                });
+                .thenApply(v -> ResponseEntity.noContent().build());
     }
 
-    private static final String MESSAGE_KEY = "message";
-    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "Something went wrong with the server";
-    private static final String FORBIDDEN_MESSAGE = "You are not authorized to access this resource";
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", HttpStatus.FORBIDDEN.value());
-        response.put("success", false);
-        response.put(MESSAGE_KEY, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<ResponseEntity<OrderListResponseDTO>> getAllOrdersAdmin(
+            Authentication auth) {
+        return orderService.getAllOrders()
+                .thenApply(ResponseEntity::ok);
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", HttpStatus.NOT_FOUND.value());
-        response.put("success", false);
-        response.put(MESSAGE_KEY, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
+    @ControllerAdvice(assignableTypes = OrderController.class)
+    public static class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String,Object>> handleAll(Exception ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", ex.getMessage());
-        response.put(MESSAGE_KEY, INTERNAL_SERVER_ERROR_MESSAGE);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<Void> handleForbidden(AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        @ExceptionHandler(EntityNotFoundException.class)
+        public ResponseEntity<Void> handleNotFound(EntityNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<Void> handleAll(Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

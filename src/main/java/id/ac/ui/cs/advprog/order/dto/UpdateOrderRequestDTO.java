@@ -1,38 +1,36 @@
 package id.ac.ui.cs.advprog.order.dto;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.validation.constraints.Future;
 import java.util.Date;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateOrderRequestDTO {
+    private String itemName;
+    private String itemCondition;
+    private String repairDetails;
 
     private UUID technicianId;
 
-    private String itemName;
-
-    private String itemCondition;
-
-    private String repairDetails;
-
-    @Future(message = "Service date must be in the future")
+    @FutureOrPresent(message = "Service date must be in the future or present")
     private Date serviceDate;
 
     private UUID paymentMethodId;
-
     private UUID couponId;
 
     private String estimatedCompletionTime;
+    private BigDecimal estimatedPrice;
+    private BigDecimal finalPrice;
 
-    private Double estimatedPrice;
-
-    private Double finalPrice;
+    private LocalDateTime completedAt;
 }
