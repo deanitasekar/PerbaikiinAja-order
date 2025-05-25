@@ -1,4 +1,6 @@
-package id.ac.ui.cs.advprog.order.model;
+package id.ac.ui.cs.advprog.order.builder;
+
+import id.ac.ui.cs.advprog.order.model.Order;
 
 import java.util.Date;
 import java.util.UUID;

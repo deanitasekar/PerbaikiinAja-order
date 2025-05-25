@@ -7,7 +7,7 @@ import id.ac.ui.cs.advprog.order.dto.ResponseDTO;
 import id.ac.ui.cs.advprog.order.dto.UpdateOrderRequestDTO;
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.model.Order;
-import id.ac.ui.cs.advprog.order.model.OrderBuilder;
+import id.ac.ui.cs.advprog.order.builder.OrderBuilder;
 import id.ac.ui.cs.advprog.order.repository.OrderRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

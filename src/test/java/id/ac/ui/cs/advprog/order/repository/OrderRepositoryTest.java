@@ -2,7 +2,7 @@ package id.ac.ui.cs.advprog.order.repository;
 
 import id.ac.ui.cs.advprog.order.enums.OrderStatus;
 import id.ac.ui.cs.advprog.order.model.Order;
-import id.ac.ui.cs.advprog.order.model.OrderBuilder;
+import id.ac.ui.cs.advprog.order.builder.OrderBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
