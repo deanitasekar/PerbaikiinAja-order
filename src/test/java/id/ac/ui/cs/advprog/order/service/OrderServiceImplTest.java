@@ -137,11 +137,12 @@ class OrderServiceImplTest {
         Order order2 = orderBuilder.setItemName("Samsung Galaxy S23 Ultra").build();
         Mockito.when(orderRepository.findAll()).thenReturn(List.of(order1, order2));
 
-        CompletableFuture<List<OrderResponseDTO>> future = orderService.getAll();
-        List<OrderResponseDTO> dtos = future.get();
+        CompletableFuture<OrderListResponseDTO> future = orderService.getAllOrders();
+        OrderListResponseDTO dto = future.get();
 
-        assertEquals(2, dtos.size());
-        assertThat(dtos).extracting(OrderResponseDTO::getItemName)
+        assertEquals(2, dto.getOrders().size());
+        assertThat(dto.getOrders())
+                .extracting(OrderResponseDTO::getItemName)
                 .containsExactly(order1.getItemName(), order2.getItemName());
     }
 
