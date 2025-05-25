@@ -78,3 +78,11 @@ DATABASE_PASSWORD=your_db_password
 # The decoded secret must be at least 512 bits (64 bytes) in length.
 JWT_SECRET="your_jwt_secret_key"
 ```
+
+
+### Profilling
+![call tree](images/profiling/calltree.png)
+![flamecgraph](images/profiling/flamegraph.png)
+![method list](images/profiling/methodlist.png)
+
+Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Pertama, overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Kedua, proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Ketiga, aktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. Untuk meningkatkan performa, terdapat beberapa peningkatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, akan membantu meningkatkan efisiensi.
