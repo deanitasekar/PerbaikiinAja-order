@@ -50,6 +50,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/notifications/**").permitAll()
+                        .requestMatchers("/coupons/**").permitAll() //HAPUS INI NANTI
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

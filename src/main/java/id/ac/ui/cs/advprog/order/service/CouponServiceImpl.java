@@ -155,6 +155,7 @@ public class CouponServiceImpl implements CouponService {
 
         if (!coupon.isValid()) {
             return ApplyCouponResponseDTO.builder()
+                    .id(coupon.getId())
                     .original_price(price)
                     .discounted_price(price)
                     .coupon_code(coupon.getCode())
@@ -175,6 +176,7 @@ public class CouponServiceImpl implements CouponService {
         }
 
         return ApplyCouponResponseDTO.builder()
+                .id(coupon.getId())
                 .original_price(price)
                 .discounted_price(discounted)
                 .coupon_code(coupon.getCode())

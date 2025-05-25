@@ -229,6 +229,7 @@ public class CouponControllerTest {
         request.setOriginal_price(100000);
 
         ApplyCouponResponseDTO responseDto = ApplyCouponResponseDTO.builder()
+                .id(couponId)
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
@@ -245,9 +246,10 @@ public class CouponControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvcResult))
-                .andDo(print())
+//                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(couponId.toString()))
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
@@ -260,6 +262,7 @@ public class CouponControllerTest {
         request.setOriginal_price(100000);
 
         ApplyCouponResponseDTO responseDto = ApplyCouponResponseDTO.builder()
+                .id(couponId)
                 .original_price(100000)
                 .discounted_price(80000)
                 .coupon_code("FIXED-XYZ")
@@ -276,9 +279,10 @@ public class CouponControllerTest {
                 .andReturn();
 
         mockMvc.perform(asyncDispatch(mvcResult))
-                .andDo(print())
+//                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(couponId.toString()))
                 .andExpect(jsonPath("$.original_price").value(100000))
                 .andExpect(jsonPath("$.discounted_price").value(80000))
                 .andExpect(jsonPath("$.coupon_code").value("FIXED-XYZ"))
