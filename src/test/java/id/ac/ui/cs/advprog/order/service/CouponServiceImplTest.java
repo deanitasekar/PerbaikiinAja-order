@@ -116,11 +116,11 @@ class CouponServiceImplTest {
     }
 
     @Test
-    void applyFixedCoupon() {
+    void applyFixedCoupon() throws Exception {
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
         when(factory.getStrategy(CouponType.FIXED)).thenReturn(new FixedCouponStrategy());
 
-        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000);
+        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000).get();
 
         assertEquals(80000, res.getDiscounted_price());
         assertEquals(coupon.getCode(), res.getCoupon_code());
@@ -129,13 +129,13 @@ class CouponServiceImplTest {
 
 
     @Test
-    void applyPercentageCoupon() {
+    void applyPercentageCoupon() throws Exception {
         coupon.setCouponType(CouponType.PERCENTAGE);
         coupon.setDiscount_amount(25);
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
         when(factory.getStrategy(CouponType.PERCENTAGE)).thenReturn(new PercentageCouponStrategy());
 
-        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000);
+        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000).get();
 
         assertEquals(75000, res.getDiscounted_price());
         assertEquals(coupon.getCode(), res.getCoupon_code());
@@ -144,13 +144,13 @@ class CouponServiceImplTest {
 
 
     @Test
-    void applyRandomCouponWithinRange() {
+    void applyRandomCouponWithinRange() throws Exception {
         coupon.setCouponType(CouponType.RANDOM);
         coupon.setDiscount_amount(20000);
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
         when(factory.getStrategy(CouponType.RANDOM)).thenReturn(new RandomCouponStrategy());
 
-        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000);
+        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 100000).get();
 
         assertTrue(res.getDiscounted_price() >= 80000 && res.getDiscounted_price() <= 100000);
         assertTrue(res.isValid());
@@ -158,11 +158,11 @@ class CouponServiceImplTest {
 
 
     @Test
-    void applyExpiredCouponReturnsOriginal() {
+    void applyExpiredCouponReturnsOriginal() throws Exception {
         coupon.setEnd_date(LocalDateTime.now().minusDays(1));
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
 
-        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 50000);
+        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 50000).get();
 
         assertEquals(50000, res.getDiscounted_price());
         assertFalse(res.isValid());
@@ -170,11 +170,11 @@ class CouponServiceImplTest {
 
 
     @Test
-    void applyOverusedCouponReturnsOriginal() {
+    void applyOverusedCouponReturnsOriginal() throws Exception {
         coupon.setMax_usage(0);
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
 
-        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 60000);
+        ApplyCouponResponseDTO res = service.applyCoupon(coupon.getId(), 60000).get();
 
         assertEquals(60000, res.getDiscounted_price());
         assertFalse(res.isValid());
@@ -189,7 +189,7 @@ class CouponServiceImplTest {
         when(mockCoupon.getCouponType()).thenReturn(null);
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.applyCoupon(UUID.randomUUID(), 10000));
+                () -> service.applyCoupon(UUID.randomUUID(), 10000).join());
     }
 
 
@@ -198,7 +198,7 @@ class CouponServiceImplTest {
         when(repo.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> service.applyCoupon(UUID.randomUUID(), 10000));
+                () -> service.applyCoupon(UUID.randomUUID(), 10000).join());
     }
 
     @Test
@@ -254,13 +254,13 @@ class CouponServiceImplTest {
     }
 
     @Test
-    void previewCoupon_shouldReturnDiscountedPriceWithoutIncrementingUsage() {
+    void previewCoupon_shouldReturnDiscountedPriceWithoutIncrementingUsage() throws Exception {
         when(repo.findById(coupon.getId())).thenReturn(Optional.of(coupon));
         when(factory.getStrategy(CouponType.FIXED)).thenReturn(new FixedCouponStrategy());
 
         int usageBefore = coupon.getCurrent_usage();
 
-        ApplyCouponResponseDTO result = service.previewCoupon(coupon.getId(), 100000);
+        ApplyCouponResponseDTO result = service.previewCoupon(coupon.getId(), 100000).get();
 
         assertEquals(80000, result.getDiscounted_price());
         assertEquals(100000, result.getOriginal_price());
