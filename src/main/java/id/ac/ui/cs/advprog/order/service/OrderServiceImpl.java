@@ -120,18 +120,39 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void updateFields(Order order, UpdateOrderRequestDTO update) {
-        if (update.getItemName() != null)       order.setItemName(update.getItemName());
-        if (update.getItemCondition() != null)  order.setItemCondition(update.getItemCondition());
-        if (update.getRepairDetails() != null)  order.setRepairDetails(update.getRepairDetails());
-        if (update.getServiceDate() != null)    order.setServiceDate(update.getServiceDate());
-        if (update.getTechnicianId() != null)   order.setTechnicianId(update.getTechnicianId());
-        if (update.getPaymentMethodId() != null)order.setPaymentMethodId(update.getPaymentMethodId());
-        if (update.getCouponId() != null)       order.setCouponId(update.getCouponId());
-        if (update.getEstimatedCompletionTime() != null)
+        if (update.getItemName() != null) {
+            order.setItemName(update.getItemName());
+        }
+        if (update.getItemCondition() != null) {
+            order.setItemCondition(update.getItemCondition());
+        }
+        if (update.getRepairDetails() != null) {
+            order.setRepairDetails(update.getRepairDetails());
+        }
+        if (update.getServiceDate() != null) {
+            order.setServiceDate(update.getServiceDate());
+        }
+        if (update.getTechnicianId() != null) {
+            order.setTechnicianId(update.getTechnicianId());
+        }
+        if (update.getPaymentMethodId() != null) {
+            order.setPaymentMethodId(update.getPaymentMethodId());
+        }
+        if (update.getCouponId() != null) {
+            order.setCouponId(update.getCouponId());
+        }
+        if (update.getEstimatedCompletionTime() != null) {
             order.setEstimatedCompletionTime(update.getEstimatedCompletionTime());
-        if (update.getEstimatedPrice() != null) order.setEstimatedPrice(update.getEstimatedPrice());
-        if (update.getFinalPrice() != null)     order.setFinalPrice(update.getFinalPrice());
-        if (update.getCompletedAt() != null)    order.setCompletedAt(update.getCompletedAt());
+        }
+        if (update.getEstimatedPrice() != null) {
+            order.setEstimatedPrice(update.getEstimatedPrice());
+        }
+        if (update.getFinalPrice() != null) {
+            order.setFinalPrice(update.getFinalPrice());
+        }
+        if (update.getCompletedAt() != null) {
+            order.setCompletedAt(update.getCompletedAt());
+        }
     }
 
     private OrderResponseDTO mapToDTO(Order order) {
