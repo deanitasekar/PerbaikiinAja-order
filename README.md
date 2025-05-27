@@ -291,6 +291,291 @@ All order endpoints may return the following error responses:
 - 404 Not Found: The requested order does not exist
 - 500 Internal Server Error: An unexpected error occurred
 
+### Coupon Endpoints
+
+Endpoints for managing discount coupons: creation, retrieval, update, deletion, application, and previewing.
+
+---
+
+#### Create a Coupon
+
+```http
+POST /coupons
+````
+
+**Description**
+Creates a new coupon with the given type, discount amount, usage limit, and active period.
+
+**Request Body**
+
+```json
+{
+  "couponType": "PERCENTAGE",
+  "discount_amount": 20,
+  "max_usage": 100,
+  "start_date": "2025-05-22T00:00:00",
+  "end_date": "2025-06-01T23:59:59"
+}
+```
+
+**Response**
+Status `201 Created`
+
+```json
+{
+  "id": "e94657ab-adf9-458d-9447-0fda7f5d9c0f",
+  "code": "PERCENTAGE-ABC",
+  "couponType": "PERCENTAGE",
+  "discount_amount": 20,
+  "max_usage": 100,
+  "start_date": "2025-05-22T00:00:00",
+  "end_date": "2025-06-01T23:59:59"
+}
+```
+
+---
+
+#### Get All Coupons
+
+```http
+GET /coupons
+```
+
+**Description**
+Retrieves every coupon, including those that may have expired or reached usage limits.
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "coupons": [
+    {
+      "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+      "code": "PERCENTAGE-5B3",
+      "couponType": "PERCENTAGE",
+      "discount_amount": 20.0,
+      "max_usage": 12345,
+      "start_date": "2025-05-25T20:00:56.258815",
+      "end_date": "2025-06-01T23:59:59"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+#### Get Valid Coupons
+
+```http
+GET /coupons/valid
+```
+
+**Description**
+Returns only coupons that are still valid (not expired, not deleted, and below the usage limit).
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "coupons": [
+    {
+      "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+      "code": "PERCENTAGE-5B3",
+      "couponType": "PERCENTAGE",
+      "discount_amount": 20.0,
+      "max_usage": 12345,
+      "start_date": "2025-05-25T20:00:56.258815",
+      "end_date": "2025-06-01T23:59:59"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+#### Get Coupon by ID
+
+```http
+GET /coupons/{id}
+```
+
+**Path Parameters**
+
+| Name | Type | Description                     |
+| ---- | ---- | ------------------------------- |
+| `id` | UUID | Unique identifier of the coupon |
+
+**Description**
+Fetches detailed information about a specific coupon.
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+  "code": "FIXED-XYZ",
+  "couponType": "FIXED",
+  "discount_amount": 10000,
+  "max_usage": 5,
+  "start_date": "2025-05-22T00:00:00",
+  "end_date": "2025-06-01T23:59:59"
+}
+```
+
+---
+
+#### Update Coupon
+
+```http
+PUT /coupons/{id}
+```
+
+**Path Parameters**
+
+| Name | Type | Description         |
+| ---- | ---- | ------------------- |
+| `id` | UUID | Coupon ID to update |
+
+**Description**
+Updates coupon fields such as type, discount amount, and usage limits.
+
+**Request Body**
+
+```json
+{
+  "couponType": "FIXED",
+  "discount_amount": 10000,
+  "max_usage": 5,
+  "start_date": "2025-05-22T00:00:00",
+  "end_date": "2025-06-01T23:59:59"
+}
+```
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+  "code": "FIXED-XYZ",
+  "couponType": "FIXED",
+  "discount_amount": 10000,
+  "max_usage": 5,
+  "start_date": "2025-05-22T00:00:00",
+  "end_date": "2025-06-01T23:59:59"
+}
+```
+
+---
+
+#### Delete Coupon
+
+```http
+DELETE /coupons/{id}
+```
+
+**Path Parameters**
+
+| Name | Type | Description         |
+| ---- | ---- | ------------------- |
+| `id` | UUID | Coupon ID to delete |
+
+**Description**
+Permanently deletes a coupon.
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Coupon deleted successfully"
+}
+```
+
+---
+
+#### Apply Coupon
+
+```http
+POST /coupons/{id}/apply
+```
+
+**Path Parameters**
+
+| Name | Type | Description        |
+| ---- | ---- | ------------------ |
+| `id` | UUID | Coupon ID to apply |
+
+**Description**
+Applies the coupon to a given price and increases its usage count.
+
+**Request Body**
+
+```json
+{
+  "original_price": 100000
+}
+```
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+  "coupon_code": "PERCENTAGE-5B3",
+  "original_price": 100000.0,
+  "discounted_price": 80000.0,
+  "valid": true
+}
+```
+
+---
+
+#### Preview Coupon
+
+```http
+POST /coupons/{id}/preview
+```
+
+**Path Parameters**
+
+| Name | Type | Description          |
+| ---- | ---- | -------------------- |
+| `id` | UUID | Coupon ID to preview |
+
+**Description**
+Returns the calculated discount without increasing the coupon’s usage.
+
+**Request Body**
+
+```json
+{
+  "original_price": 100000
+}
+```
+
+**Response**
+Status `200 OK`
+
+```json
+{
+  "id": "5b3802e7-cdda-4dfd-8ef1-2e2e38639bf1",
+  "coupon_code": "PERCENTAGE-5B3",
+  "original_price": 100000.0,
+  "discounted_price": 80000.0,
+  "valid": true
+}
+```
+
+
+---
 
 ## Environment Configuration
 
