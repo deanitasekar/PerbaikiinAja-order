@@ -307,15 +307,88 @@ DATABASE_PASSWORD=your_db_password
 JWT_SECRET="your_jwt_secret_key"
 ```
 
-### Monitoring
+---
+
+### **Software Design**
+
+**SOLID Principles**
+- **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti Setiap OrderController menangani HTTP request dan validasi authorization, OrderService mengelola logika bisnis dan business rules, OrderRepository menangani akses data, dan Order model merepresentasikan struktur entitas order.
+- **Open/Closed Principle (OCP)**: Interface OrderService memungkinkan perluasan fungsionalitas tanpa perlu memodifikasi kode yang sudah ada, seperti penambahan metode baru untuk operasi order yang lebih kompleks.
+- **Liskov Substitution Principle (LSP)**: Penerapan abstraksi sudah bersifat konsisten, terutama dalam implementasi OrderServiceImpl yang mengikuti kontrak interface OrderService, memastikan substitusi yang sesuai.
+- **Interface Segregation Principle (ISP)**: Interface OrderService hanya berisi metode yang relevan dan dibutuhkan untuk operasi order management seperti create, read, update, dan cancel operations.
+- **Dependency Inversion Principle (DIP)**: Implementasi constructor injection pada OrderController dan OrderServiceImpl meminimalkan ketergantungan langsung antar komponen, menggunakan abstraksi interface daripada implementasi konkret.
+
+**Maintainability**
+- **Separation of Concerns**: Adanya pemisahan yang jelas antara lapisan controller (OrderController), service (OrderService), model (Order), akses data (OrderRepository), dan transfer objects (multiple DTOs).
+- **Modularisasi**: Penggunaan multiple DTOs (OrderRequestDTO, OrderResponseDTO, UpdateOrderRequestDTO, OrderListResponseDTO) untuk memisahkan representasi data eksternal dari model internal, meningkatkan fleksibilitas sistem dan API versioning.
+- **Readability**: Struktur kode terorganisir dengan penamaan metode yang intuitif dan self-documenting, seperti getOrdersByCustomerId, updateOrder, cancelOrder, dan getAllOrdersAdmin.
+- **Testability**: Struktur mendukung unit testing dengan dependency injection dan separation of concerns yang memungkinkan mocking components untuk isolated testing.
+
+**Design Patterns**
+
+- **DTO (Data Transfer Object)**
+  > Penerapan multiple DTOs untuk menyediakan representasi data yang sesuai dengan kebutuhan komunikasi client-server dan different use cases (create, update, response, list).
+
+- **Builder Pattern**
+  > Design pattern ini diimplementasikan pada OrderBuilder untuk memudahkan pembuatan objek Order dengan multiple required dan optional parameters secara terstruktur. Pattern ini dipilih karena model Order memiliki banyak parameter pada constructornya, dan pattern ini memungkinkan validasi parameter saat construction time sehingga memastikan objek selalu dalam keadaan valid dan konsisten.
+
+- **Factory Pattern**: Diterapkan pada jenis-jenis pembayaran, memungkinkan penambahan metode pembayaran baru dengan mudah tanpa merubah kode yang ada.
+  > Saya memilih menggunakan Factory Pattern untuk menyederhanakan pembuatan objek-objek, terutama pada bagian PaymentMethod yang punya berbagai tipe. Factory Pattern memungkinkan aplikasi untuk menangani variasi tipe objek (misalnya BankTransfer, EWallet, dan COD) tanpa harus membuat objek secara langsung di banyak tempat.
+
+---
+
+### **Software Quality**
+
+**Clean Code**
+- **Separation of Concerns**: Pemisahan yang jelas antara penanganan request dan authorization (OrderController), logika bisnis dan business rules (OrderService), akses data (OrderRepository), dan transfer objects (multiple DTOs).
+- **Naming Conventions**: Penamaan yang deskriptif dan konsisten untuk class, metode, dan variabel, seperti OrderController, getOrdersByCustomerId, createOrder, updateOrder, dan extractUserId yang menjelaskan fungsi secara eksplisit.
+- **Readability**: Metode-metode pada kode dibuat secara ringkas dan fokus pada fungsi spesifik, dengan penggunaan method chaining pada CompletableFuture dan lambda expressions yang meningkatkan readability.
+- **DRY Principle**: Implementasi helper method seperti extractUserId() dan updateFields() untuk menghindari code duplication dan centralized logic.
+
+**Secure Coding**
+- **Input Validation**: Validasi data masukan yang komprehensif pada DTOs dengan Jakarta validation annotations seperti @NotBlank, @NotNull, @FutureOrPresent untuk memastikan data integrity dan mencegah invalid input.
+- **Role-Based Access Control**: Penerapan kontrol akses berdasarkan peran dengan @PreAuthorize("hasRole('USER')") dan @PreAuthorize("hasRole('ADMIN')") untuk membatasi akses ke operasi tertentu sesuai dengan priviledge level.
+- **JWT Authentication**: Mekanisme autentikasi JWT melalui Authentication parameter yang diekstrak dari security context untuk mendapatkan user identity.
+- **Exception Handling**: Global exception handler untuk menangani berbagai jenis error secara konsisten dengan proper HTTP status codes (403 Forbidden, 404 Not Found, 500 Internal Server Error).
+
+**Testing**
+- **Unit Testing**: Arsitektur kode yang mendukung unit testing dengan dependency injection, interface-based design, dan separation of concerns yang memungkinkan isolated testing.
+- **Mocking**: Penggunaan mocking (`Mockito`) untuk memastikan bahwa unit tests tidak bergantung pada implementasi yang lebih besar, seperti database.
+
+---
+
+### **Software Deployment**
+
+Terdapat workflow CI/CD (Continuous Integration/Continuous Deployment) yang meliputi scorecard, build process, testing suite, dan automated deployment. Pipeline CI/CD diimplementasikan menggunakan GitHub Actions, deployment dilakukan ke AWS Academy.
+
+---
+
+### **Profilling dan Monitoring**
+
+#### Profiling dengan Intellij Profiler
+![Call Tree](images/profiling/calltree.png)
+![Flame Graph](images/profiling/flamegraph.png)
+![Method List](images/profiling/methodlist.png)
+
+
+Pada tahap profiling, menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi Order Management System. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
+
+Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Pertama, overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Kedua, proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Ketiga, aktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. Untuk meningkatkan performa, terdapat beberapa peningkatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, akan membantu meningkatkan efisiensi.
+
+#### Monitoring dengan SpringBoot Actuator, Prometheus, Grafana
 ![Monitoring](images/monitoring/monitoring1.png)
 ![Monitoring](images/monitoring/monitoring2.png)
 ![Monitoring](images/monitoring/monitoring3.png)
 ![Monitoring](images/monitoring/monitoring4.png)
 
-### Profilling
-![call tree](images/profiling/calltree.png)
-![flamecgraph](images/profiling/flamegraph.png)
-![method list](images/profiling/methodlist.png)
 
-Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Pertama, overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Kedua, proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Ketiga, aktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. Untuk meningkatkan performa, terdapat beberapa peningkatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, akan membantu meningkatkan efisiensi.
+Sistem monitoring OrderApplication diimplementasikan menggunakan kombinasi Spring Boot Actuator, Prometheus, dan Grafana untuk memberikan visibilitas komprehensif terhadap performa aplikasi dalam real-time.
+
+**Komponen Monitoring:**
+- **Spring Boot Actuator** memudahkan expose berbagai metrik penting aplikasi Order Management System (seperti HTTP request metrics, JVM memory usage, CPU utilization, database connection pool, dan custom business metrics untuk order operations) secara langsung tanpa perlu banyak konfigurasi manual.
+- **Prometheus** sebagai time-series database yang handal untuk mengumpulkan dan menyimpan metrik aplikasi secara efisien, termasuk metrik khusus seperti jumlah order per status, response time untuk operasi CRUD order, dan throughput API endpoints.
+- **Grafana** menyediakan visualisasi interaktif dan dashboard realtime yang mudah dikustomisasi, sehingga memudahkan pemantauan performa aplikasi secara komprehensif dengan alert notifications untuk kondisi abnormal.
+
+**Arsitektur Monitoring:**
+- Prometheus melakukan scraping terhadap endpoint `/actuator/prometheus` secara berkala setiap 3 detik (dikonfigurasi di prometheus.yml) untuk mengumpulkan metrik dari Order Management System.
+- Grafana membaca data dari Prometheus datasource dan menampilkan metrik seperti JVM memory usage, CPU load, HTTP request rates, order creation rates, database query performance, dan CompletableFuture execution metrics dalam bentuk grafik dan panel interaktif.
