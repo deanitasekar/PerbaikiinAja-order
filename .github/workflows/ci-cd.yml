@@ -143,10 +143,10 @@ jobs:
               sudo systemctl start docker
               sudo usermod -aG docker ubuntu
             fi
-            if ! docker compose version &> /dev/null; then
+            if ! command -v docker-compose &> /dev/null; then
               sudo apt update -y
-              sudo apt install -y docker-compose-plugin
+              sudo apt install -y docker-compose
             fi
 
-            sudo docker compose down
-            sudo docker compose up -d --build
+            sudo docker-compose down
+            sudo docker-compose up -d --build
