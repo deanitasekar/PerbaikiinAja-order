@@ -198,9 +198,9 @@ Updates an existing order. Users can only update their own orders. Only non-null
 
 **Request Body:**
 json{
-  "itemName": "iPhone 14 Pro Max",
-  "repairDetails": "Replace screen, battery, and check internal components",
-  "estimatedPrice": 300000
+"itemName": "iPhone 14 Pro Max",
+"repairDetails": "Replace screen, battery, and check internal components",
+"estimatedPrice": 300000
 }
 
 **Response:**
@@ -595,7 +595,7 @@ JWT_SECRET="your_jwt_secret_key"
 ---
 
 ### **Software Design**
-
+#### Order
 **SOLID Principles**
 - **Single Responsibility Principle (SRP)**: Kode yang dibuat sudah mengikuti prinsip ini, seperti Setiap OrderController menangani HTTP request dan validasi authorization, OrderService mengelola logika bisnis dan business rules, OrderRepository menangani akses data, dan Order model merepresentasikan struktur entitas order.
 - **Open/Closed Principle (OCP)**: Interface OrderService memungkinkan perluasan fungsionalitas tanpa perlu memodifikasi kode yang sudah ada, seperti penambahan metode baru untuk operasi order yang lebih kompleks.
@@ -619,8 +619,35 @@ JWT_SECRET="your_jwt_secret_key"
 
 ---
 
-### **Software Quality**
+#### Coupon
+**SOLID Principles**
+* **Single Responsibility Principle (SRP)**: Setiap komponen memiliki tanggung jawab tunggal: `CouponController` mengatur endpoint, `CouponService` menangani logika bisnis, `CouponRepository` bertanggung jawab untuk data access, dan `Coupon` merepresentasikan entitas kupon.
+* **Open/Closed Principle (OCP)**: `CouponStrategyFactory` mendukung penambahan jenis kupon baru (misalnya `PERCENTAGE`) tanpa mengubah kode existing, hanya dengan menambahkan implementasi baru dari `CouponStrategy`.
+* **Liskov Substitution Principle (LSP)**: Semua implementasi strategi diskon (`FixedCouponStrategy`, `PercentageCouponStrategy`, `RandomCouponStrategy`) dapat digunakan sebagai substitusi dari interface `CouponStrategy` tanpa mengubah perilaku program.
+* **Interface Segregation Principle (ISP)**: Interface `CouponService` hanya berisi operasi yang relevan dengan manajemen kupon (create, update, apply, preview, dll), tidak mencampurkan logika domain lain.
+* **Dependency Inversion Principle (DIP)**: `CouponServiceImpl` bergantung pada interface `CouponRepository` dan `CouponStrategy` (melalui factory), bukan implementasi konkret, memudahkan pengujian dan pemeliharaan.
 
+**Maintainability**
+* **Separation of Concerns**: Tugas dibagi jelas antara controller, service, repository, model, DTO, dan strategy. Semua interaksi HTTP diproses di `CouponController`, logika di `CouponService`, dan transformasi data dikelola dengan DTO.
+* **Modularisasi**: DTO seperti `CreateCouponRequestDTO`, `UpdateCouponRequestDTO`, `CouponResponseDTO`, dan `ApplyCouponResponseDTO` memastikan pemisahan antara struktur data internal dan kontrak API publik.
+* **Readability**: Nama method dan class mengikuti konvensi deskriptif seperti `applyCoupon`, `findAllValid`, `incrementUsage`, menjadikan kode self-documenting.
+* **Testability**: Dengan menggunakan `CompletableFuture`, `@Async`, dan constructor injection, service ini mudah di-test secara unit menggunakan mocking (`Mockito`), termasuk validasi strategi diskon.
+
+**Design Pattern**
+* **Strategy Pattern**
+
+  > Digunakan untuk mengabstraksi logika diskon dengan interface `CouponStrategy` dan tiga implementasi (`Fixed`, `Percentage`, `Random`). Ini memungkinkan runtime polymorphism, di mana diskon dihitung sesuai jenis kupon.
+
+* **Factory Pattern**
+
+  > `CouponStrategyFactory` menyederhanakan pemilihan strategi berdasarkan `CouponType`, menjaga kode agar terbuka terhadap ekstensi namun tertutup terhadap modifikasi.
+
+* **DTO (Data Transfer Object)**
+
+  > DTO digunakan untuk setiap interaksi data antara layer, memastikan keamanan dan validasi data eksternal tanpa mengekspos entitas `Coupon` secara langsung.
+
+### **Software Quality**
+#### Order
 **Clean Code**
 - **Separation of Concerns**: Pemisahan yang jelas antara penanganan request dan authorization (OrderController), logika bisnis dan business rules (OrderService), akses data (OrderRepository), dan transfer objects (multiple DTOs).
 - **Naming Conventions**: Penamaan yang deskriptif dan konsisten untuk class, metode, dan variabel, seperti OrderController, getOrdersByCustomerId, createOrder, updateOrder, dan extractUserId yang menjelaskan fungsi secara eksplisit.
@@ -639,6 +666,21 @@ JWT_SECRET="your_jwt_secret_key"
 
 ---
 
+#### Coupon
+**Clean Code**
+* **Readable & Reusable**: Fungsi dalam `CouponServiceImpl` terorganisasi secara modular dengan nama deskriptif. Logic `calc()` untuk diskon terenkapsulasi dan reusable untuk `apply` dan `preview`.
+* **DRY Principle**: Reuse logic dengan `toResponse()` dan `calc()` untuk menghindari duplikasi kode.
+* **Validation**: DTO disertai anotasi validasi Jakarta seperti `@PositiveOrZero`, `@NotBlank`, dan `@Min`.
+
+**Secure Coding**
+* **Input Validation**: Validasi data kupon saat pembuatan atau update dilakukan melalui DTO.
+* **JWT-based Authorization**: Endpoints dilindungi dengan filter JWT, peran pengguna diverifikasi untuk akses endpoint.
+
+**Testing**
+* **Async-Friendly**: Dukungan `@Async("asyncExecutor")` memungkinkan pengujian logika paralel secara terkontrol.
+* **Mockable Architecture**: Dependency injection dan pemisahan interface mempermudah mocking pada `CouponRepository` dan `CouponStrategyFactory`.
+* **Isolated Unit Testing**: Struktur modular mendukung pengujian tiap komponen secara terpisah, termasuk validasi dan strategi diskon.
+
 ### **Software Deployment**
 
 Terdapat workflow CI/CD (Continuous Integration/Continuous Deployment) yang meliputi scorecard, build process, testing suite, dan automated deployment. Pipeline CI/CD diimplementasikan menggunakan GitHub Actions, deployment dilakukan ke AWS Academy.
@@ -655,7 +697,7 @@ Terdapat workflow CI/CD (Continuous Integration/Continuous Deployment) yang meli
 
 Profilling dilakukan dengan menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi Order Management System. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
 
-Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Aaktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. 
+Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Aaktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread.
 
 Untuk meningkatkan performa, terdapat beberapa pendekatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, untuk membantu meningkatkan efisiensi.
 
