@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/notifications/**").permitAll()
                         .requestMatchers("/orders/**").permitAll()
+                        .requestMatchers("/coupons/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
