@@ -245,7 +245,7 @@ A successful response returns an HTTP 204 (No Content) status. If the order is n
 Requires ADMIN role in addition to a valid JWT token.
 
 ```http
-ET /orders/admin
+GET /orders/admin
 ```
 
 **Description:**
@@ -332,9 +332,6 @@ JWT_SECRET="your_jwt_secret_key"
 - **Builder Pattern**
   > Design pattern ini diimplementasikan pada OrderBuilder untuk memudahkan pembuatan objek Order dengan multiple required dan optional parameters secara terstruktur. Pattern ini dipilih karena model Order memiliki banyak parameter pada constructornya, dan pattern ini memungkinkan validasi parameter saat construction time sehingga memastikan objek selalu dalam keadaan valid dan konsisten.
 
-- **Factory Pattern**: Diterapkan pada jenis-jenis pembayaran, memungkinkan penambahan metode pembayaran baru dengan mudah tanpa merubah kode yang ada.
-  > Saya memilih menggunakan Factory Pattern untuk menyederhanakan pembuatan objek-objek, terutama pada bagian PaymentMethod yang punya berbagai tipe. Factory Pattern memungkinkan aplikasi untuk menangani variasi tipe objek (misalnya BankTransfer, EWallet, dan COD) tanpa harus membuat objek secara langsung di banyak tempat.
-
 ---
 
 ### **Software Quality**
@@ -371,9 +368,11 @@ Terdapat workflow CI/CD (Continuous Integration/Continuous Deployment) yang meli
 ![Method List](images/profiling/methodlist.png)
 
 
-Pada tahap profiling, menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi Order Management System. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
+Profilling dilakukan dengan menggunakan fitur IntelliJ Profiler untuk menganalisis performa aplikasi Order Management System. Profiling dilakukan dengan menjalankan aplikasi dalam mode profiler di IntelliJ sehingga dapat merekam aktivitas CPU, memori, serta panggilan metode secara detail selama aplikasi berjalan.
 
-Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Pertama, overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Kedua, proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Ketiga, aktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. Untuk meningkatkan performa, terdapat beberapa peningkatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, akan membantu meningkatkan efisiensi.
+Profil performa menunjukkan beberapa bottleneck utama dalam aplikasi. Overhead refleksi yang tinggi terlihat pada pemanggilan java.lang.reflect.Method.invoke dan DirectMethodHandleAccessor.Invoke. Proses startup Spring Boot, seperti refreshContext dan createBean, menghabiskan banyak waktu, menunjukkan perlunya optimasi inisialisasi. Aaktivitas RestartLauncher.run mengindikasikan bahwa fitur DevTools yang digunakan dalam pengembangan mungkin tidak perlu dijalankan di lingkungan produksi. Selain itu, manajemen thread dan garbage collection juga memerlukan perhatian, terutama pada Thread.run dan ForkJoinWorkerThread. 
+
+Untuk meningkatkan performa, terdapat beberapa pendekatan, seperti menonaktifkan DevTools di produksi akan menghilangkan overhead yang tidak diperlukan. Kemudian, optimasi manajemen thread dan memori, seperti menggunakan thread pooling dan mengurangi alokasi objek sementara, untuk membantu meningkatkan efisiensi.
 
 #### Monitoring dengan SpringBoot Actuator, Prometheus, Grafana
 ![Monitoring](images/monitoring/monitoring1.png)
