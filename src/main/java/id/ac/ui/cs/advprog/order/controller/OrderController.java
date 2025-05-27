@@ -31,7 +31,6 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/orders")
-@PreAuthorize("hasRole('USER')")
 public class OrderController {
 
     private final OrderService orderService;
