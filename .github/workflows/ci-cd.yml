@@ -117,11 +117,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
-          source: |
-            build/libs/*.jar
-            Dockerfile
-            docker-compose.yml
-            prometheus.yml
+          source: "build/libs/*.jar,Dockerfile,docker-compose.yml,prometheus.yml"
           target: /home/ubuntu/app
 
       - name: SSH and deploy with Docker and create .env
