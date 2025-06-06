@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-LABEL authors="Ghina Nabila"
+LABEL authors="Deanita Sekar"
 
 ENTRYPOINT ["top", "-b"]
 
